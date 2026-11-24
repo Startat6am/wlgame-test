@@ -1,8 +1,9 @@
 export class NetworkClient {
-  constructor(onState, onStatus, onWelcome) {
+  constructor(onState, onStatus, onWelcome, onCombat) {
     this.onState = onState;
     this.onStatus = onStatus;
     this.onWelcome = onWelcome;
+    this.onCombat = onCombat;
     this.socket = null;
     this.connected = false;
     this.playerId = null;
@@ -24,9 +25,10 @@ export class NetworkClient {
             this.playerId = message.id;
             this.onWelcome?.(message.id);
           }
-          if (message.type === 'snapshot') this.onState(message.players ?? []);
+          if (message.type === 'snapshot') this.onState(message);
+          if (message.type === 'combat') this.onCombat?.(message);
         } catch {
-          // Ignore malformed packets; server state is never trusted blindly.
+          // Ignore malformed packets; server remains authoritative.
         }
       });
       this.socket.addEventListener('close', () => {
@@ -44,12 +46,16 @@ export class NetworkClient {
   }
 
   sendInput(x, y) {
+    this.send({ type: 'input', x, y });
+  }
+
+  castFireball(angle) {
+    this.send({ type: 'cast', ability: 'fireball', angle });
+  }
+
+  send(message) {
     if (!this.connected || this.socket?.readyState !== WebSocket.OPEN) return;
-    this.socket.send(JSON.stringify({
-      type: 'input',
-      x: Math.max(-1, Math.min(1, x)),
-      y: Math.max(-1, Math.min(1, y))
-    }));
+    this.socket.send(JSON.stringify(message));
   }
 
   disconnect() {
