@@ -6,7 +6,7 @@
 - **Branch:** `main`
 - **Checkpoint date:** 2026-11-24
 - **Current isometric work branch:** `feature/isometric-arena`.
-- **Latest isometric implementation commit:** `8edf7edc6c25212d7ed8e9fb53e90810ade24fe2` (pointer/FIRE coordinate fixes and actor-foot/depth alignment).
+- **Latest isometric implementation commit:** `cc5abc214ee69b1f5d3537ea55b3067d7f2edc9d` (pointer/FIRE coordinate fixes and actor-foot/depth alignment).
 - **Base commit:** `b30dccee049e99af70a9563deccb2f97676183b3`.
 - **Previous verified code checkpoint:** `32b211a156441d19f0377cc9274261460813dc15` — CI passed on run #25.
 - **Current code commit CI:** pending at the time this handoff was last updated; verify the run for the exact HEAD SHA.
