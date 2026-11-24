@@ -1,0 +1,147 @@
+{
+  "schemaVersion": 1,
+  "game": "Warlock Arena 0.88-inspired WLGame prototype",
+  "statusLegend": {
+    "confirmed_088": "Explicitly documented for original Warlock Arena 0.88/0.88b.",
+    "reference_other_version": "Found in another Warlock version or related handbook; not guaranteed to match 0.88b.",
+    "estimated": "Temporary WLGame tuning value; must be playtested."
+  },
+  "units": {
+    "health": "hit points",
+    "cooldown": "seconds",
+    "damage": "hit points per hit or tick",
+    "range": "world units",
+    "knockback": "relative impulse multiplier"
+  },
+  "baseline": {
+    "maxHealth": { "value": 100, "status": "estimated" },
+    "lavaDamagePerSecond": { "value": 9, "status": "reference_other_version", "note": "Reported for Warlock 0.91, not confirmed for 0.88b." },
+    "movementSpeed": { "value": 230, "status": "estimated", "note": "Matches current prototype movement speed." },
+    "damagePointKnockbackScale": { "value": 0.012, "status": "estimated", "note": "Temporary multiplier in K = baseKnockback * (1 + damagePoints * scale)." }
+  },
+  "masteries": {
+    "rangedProjectileRangePerLevel": { "value": 0.10, "status": "confirmed_088", "note": "Original 0.88 patch note: projectile travel distance +10%." },
+    "lightningRangePerLevel": { "value": 0.15, "status": "confirmed_088", "note": "Original 0.88 patch note: lightning range +15%." },
+    "aoeRadiusPerLevel": { "value": 0.12, "status": "confirmed_088", "note": "Original 0.88 patch note: explosion radius +12%; does not apply to Splitter or Gravity distance." }
+  },
+  "abilities": [
+    {
+      "id": "fireball",
+      "name": "Fireball",
+      "category": "projectile_damage",
+      "damage": { "value": 8, "status": "estimated" },
+      "cooldown": { "value": 1.4, "status": "estimated" },
+      "range": { "value": 520, "status": "estimated" },
+      "knockback": { "value": 1.0, "status": "estimated" },
+      "projectileSpeed": { "value": 520, "status": "estimated" },
+      "note": "Baseline direct projectile; all numeric values are prototype estimates."
+    },
+    {
+      "id": "lightning",
+      "name": "Lightning",
+      "category": "direct_damage",
+      "damage": { "value": 10, "status": "estimated" },
+      "cooldown": { "value": 5, "status": "estimated" },
+      "range": { "value": 420, "status": "estimated" },
+      "knockback": { "value": 1.15, "status": "estimated" },
+      "note": "Range mastery scaling is confirmed for 0.88; base values are estimates."
+    },
+    {
+      "id": "boomerang",
+      "name": "Boomerang",
+      "category": "returning_projectile",
+      "damage": { "value": 5, "status": "estimated" },
+      "cooldown": { "value": 6, "status": "estimated" },
+      "range": { "value": 480, "status": "estimated" },
+      "knockback": { "value": 0.65, "status": "estimated" },
+      "maxHits": { "value": 2, "status": "estimated" },
+      "directionRule": { "value": "alternate_each_shot", "status": "confirmed_088", "note": "0.88 patch note: direction alternates with each shot instead of random." },
+      "note": "Returning path and repeated hits are reference mechanics, not confirmed exact 0.88 numbers."
+    },
+    {
+      "id": "fire_spray_stream",
+      "name": "Fire Spray — Stream",
+      "category": "multi_projectile",
+      "damagePerProjectile": { "value": 3, "status": "estimated" },
+      "projectileCount": { "value": 5, "status": "estimated" },
+      "cooldown": { "value": 7, "status": "estimated" },
+      "knockback": { "value": 0.45, "status": "estimated" },
+      "note": "Stream is a rapid volley; all numeric values are estimates."
+    },
+    {
+      "id": "fire_spray_cluster",
+      "name": "Fire Spray — Cluster",
+      "category": "radial_projectiles",
+      "damagePerProjectile": {
+        "base": 3.4,
+        "perUpgrade": 0.4,
+        "status": "confirmed_088",
+        "note": "Original 0.88b patch note: 3.4 + 0.4 per upgrade."
+      },
+      "cooldown": { "value": 8, "status": "estimated" },
+      "knockback": { "value": 0.55, "status": "estimated" },
+      "projectileCount": { "value": 8, "status": "estimated" },
+      "note": "Damage progression is confirmed; cooldown, count and knockback are estimates."
+    },
+    {
+      "id": "gravity_dark_matter",
+      "name": "Gravity — Dark Matter",
+      "category": "control_field",
+      "damagePerTick": { "value": 2, "status": "estimated" },
+      "cooldown": { "value": 10, "status": "estimated" },
+      "duration": { "value": 2.5, "status": "estimated" },
+      "radius": { "value": 150, "status": "estimated" },
+      "knockback": { "value": 0.25, "status": "estimated" },
+      "purchaseCost": { "value": 15, "status": "confirmed_088", "note": "Original patch note reduced Gravity price to 15." },
+      "note": "Pulls players/projectiles as a reference mechanic. Damage and field values are estimates."
+    },
+    {
+      "id": "gravity_force_field",
+      "name": "Gravity — Force Field",
+      "category": "control_field",
+      "damagePerSecond": { "value": 2, "status": "estimated" },
+      "cooldown": { "value": 12, "status": "estimated" },
+      "duration": { "value": 2.5, "status": "estimated" },
+      "radius": { "value": 140, "status": "estimated" },
+      "slow": { "value": 0.35, "status": "estimated" },
+      "note": "Area slow/damage is based on related Warlock reference material; numeric values are estimates."
+    },
+    {
+      "id": "swap",
+      "name": "Swap",
+      "category": "mobility",
+      "cooldown": { "value": 8, "status": "estimated" },
+      "range": { "value": 360, "status": "estimated" },
+      "note": "Original 0.88 renamed Displacement to Swap and reduced its cooldown by 0.5 seconds. Exact cooldown/range remain unknown."
+    },
+    {
+      "id": "freeze",
+      "name": "Freeze",
+      "category": "disable",
+      "cooldown": { "value": 8, "status": "estimated" },
+      "duration": { "value": 1, "status": "estimated" },
+      "range": { "value": 340, "status": "estimated" },
+      "note": "Original patch notes say Freeze upgrades also increase duration; base values are estimates."
+    },
+    {
+      "id": "aegis",
+      "name": "Aegis",
+      "category": "defense",
+      "cooldown": { "value": 12, "status": "estimated" },
+      "duration": { "value": 2.5, "status": "estimated" },
+      "damageReduction": { "value": 0.25, "status": "reference_other_version", "note": "A 20–30% range is reported in Warlock 0.91; 25% is a prototype midpoint, not 0.88 data." },
+      "purchaseCost": { "value": 17, "status": "confirmed_088", "note": "Original 0.88 patch note reduced Aegis price to 17." },
+      "note": "Protection values and duration are estimates/reference; purchase cost is confirmed."
+    }
+  ],
+  "combatFormula": {
+    "knockback": "baseKnockback * abilityMultiplier * (1 + damagePoints * damagePointKnockbackScale)",
+    "damagePointsRule": { "value": "damageTakenAddsDamagePoints", "status": "reference_other_version", "note": "Warlock 0.80 reference describes damage points increasing subsequent knockback." }
+  },
+  "implementationNotes": [
+    "Do not treat estimated values as recovered original map data.",
+    "Keep balance data separate from Phaser scene logic.",
+    "Do not invent the remaining original abilities or the 49 combinations; add them only when a source or tested design is available.",
+    "Tune one mechanic at a time using repeatable arena tests."
+  ]
+}
