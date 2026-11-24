@@ -11,6 +11,7 @@ export class TouchControls {
     this.origin = new Phaser.Math.Vector2(92, scene.scale.height - 104);
     this.vector = new Phaser.Math.Vector2();
     this.graphics = scene.add.graphics().setScrollFactor(0).setDepth(1000);
+    this.dirty = true;
 
     scene.input.on('pointerdown', this.onDown, this);
     scene.input.on('pointermove', this.onMove, this);
@@ -39,23 +40,31 @@ export class TouchControls {
     const y = dy * scale;
     this.vector.set(x, y);
     if (length < DEAD_ZONE) this.vector.set(0, 0);
+    this.dirty = true;
   }
 
   onUp(pointer) {
     if (pointer.id !== this.pointerId) return;
     this.pointerId = null;
     this.vector.set(0, 0);
+    this.dirty = true;
   }
 
   onResize(gameSize) {
     this.origin.set(92, gameSize.height - 104);
     if (this.pointerId !== null) this.vector.set(0, 0);
+    this.dirty = true;
   }
 
   update() {
+    if (!this.scene.sys.game.device.input.touch) {
+      this.graphics.setVisible(false);
+      return;
+    }
+    if (!this.dirty) return;
+    this.graphics.setVisible(true);
     const g = this.graphics;
     g.clear();
-    if (!this.scene.sys.game.device.input.touch) return;
     const active = this.pointerId !== null;
     g.fillStyle(0x07100b, 0.28);
     g.fillCircle(this.origin.x, this.origin.y, MAX_RADIUS + 12);
@@ -63,6 +72,7 @@ export class TouchControls {
     g.strokeCircle(this.origin.x, this.origin.y, MAX_RADIUS);
     g.fillStyle(0xc7b98a, active ? 0.58 : 0.3);
     g.fillCircle(this.origin.x + this.vector.x, this.origin.y + this.vector.y, 23);
+    this.dirty = false;
   }
 
   destroy() {
