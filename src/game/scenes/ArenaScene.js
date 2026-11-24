@@ -13,6 +13,9 @@ export class ArenaScene extends Phaser.Scene {
     this.remotePlayers = new Map();
     this.projectileViews = new Map();
     this.lastLocalCastAt = -Infinity;
+    this.selectedAbility = null;
+    this.aimPointerId = null;
+    this.aimTarget = null;
   }
 
   create() {
@@ -25,6 +28,7 @@ export class ArenaScene extends Phaser.Scene {
     this.cameras.main.setBounds(0, 0, WORLD.width, WORLD.height);
     this.cameras.main.startFollow(this.hero, true, 0.08, 0.08);
     this.physics.add.collider(this.hero, this.obstacles);
+    this.createSkillBar();
 
     this.network = new NetworkClient(
       (snapshot) => this.applySnapshot(snapshot),
@@ -34,24 +38,27 @@ export class ArenaScene extends Phaser.Scene {
     );
     this.network.connect();
 
-    this.add.text(18, 18, 'WARLOCK ARENA · TEST GROUNDS', {
-      fontFamily: 'Georgia, serif', fontSize: '15px', color: '#e4d7aa',
+    this.add.text(18, 14, 'WARLOCK ARENA', {
+      fontFamily: 'Georgia, serif', fontSize: '14px', color: '#e4d7aa',
       stroke: '#10150f', strokeThickness: 4
     }).setScrollFactor(0).setDepth(900);
-    this.add.text(18, 42, 'WASD / стрелки — движение · SPACE / клик — Fireball', {
-      fontFamily: 'Arial, sans-serif', fontSize: '12px', color: '#c0c7ad'
-    }).setScrollFactor(0).setDepth(900);
-    this.healthLabel = this.add.text(18, 64, 'HP: 100 / 100', {
+    this.healthLabel = this.add.text(18, 36, 'HP: 100 / 100', {
       fontFamily: 'Arial, sans-serif', fontSize: '13px', color: '#f0dca2'
     }).setScrollFactor(0).setDepth(900);
 
-    this.input.on('pointerdown', (pointer) => {
-      if (pointer.button === 0) this.castFireball(pointer.worldX, pointer.worldY);
-    });
+    this.aimGraphics = this.add.graphics().setDepth(850);
+    this.input.on('pointerdown', this.onArenaPointerDown, this);
+    this.input.on('pointermove', this.onArenaPointerMove, this);
+    this.input.on('pointerup', this.onArenaPointerUp, this);
+    this.input.on('pointerupoutside', this.onArenaPointerUp, this);
 
     this.events.once('shutdown', () => {
       this.touch.destroy();
       this.network.disconnect();
+      this.input.off('pointerdown', this.onArenaPointerDown, this);
+      this.input.off('pointermove', this.onArenaPointerMove, this);
+      this.input.off('pointerup', this.onArenaPointerUp, this);
+      this.input.off('pointerupoutside', this.onArenaPointerUp, this);
     });
   }
 
@@ -106,6 +113,89 @@ export class ArenaScene extends Phaser.Scene {
     }).setOrigin(0.5, 1).setDepth(11);
   }
 
+  createSkillBar() {
+    // The same data-driven button pattern will host every implemented ability.
+    this.skillButtons = new Map();
+    this.createSkillButton('fireball', 'FIRE', 0xffa33a);
+    this.layoutSkillBar();
+    this.scale.on('resize', this.layoutSkillBar, this);
+  }
+
+  createSkillButton(id, label, color) {
+    const container = this.add.container(0, 0).setScrollFactor(0).setDepth(1100);
+    const ring = this.add.circle(0, 0, 34, 0x111810, 0.92).setStrokeStyle(3, 0x89764b, 1);
+    const icon = this.add.circle(0, 0, 24, color, 0.9).setStrokeStyle(2, 0xffe5a0, 0.9);
+    const text = this.add.text(0, 1, label, {
+      fontFamily: 'Arial, sans-serif', fontSize: '11px', fontStyle: 'bold',
+      color: '#20190f', align: 'center'
+    }).setOrigin(0.5);
+    const hit = this.add.circle(0, 0, 39, 0xffffff, 0.001).setInteractive();
+    hit.on('pointerdown', (pointer) => {
+      pointer.event?.stopPropagation?.();
+      this.toggleAbility(id);
+    });
+    container.add([ring, icon, text, hit]);
+    this.skillButtons.set(id, { container, ring, icon, text });
+  }
+
+  layoutSkillBar() {
+    const { width, height } = this.scale;
+    const portrait = height > width;
+    const button = this.skillButtons?.get('fireball');
+    if (button) button.container.setPosition(width - 62, height - (portrait ? 104 : 82));
+  }
+
+  toggleAbility(id) {
+    this.selectedAbility = this.selectedAbility === id ? null : id;
+    for (const [abilityId, view] of this.skillButtons) {
+      const active = this.selectedAbility === abilityId;
+      view.ring.setStrokeStyle(active ? 4 : 3, active ? 0xffdf78 : 0x89764b, 1);
+      view.icon.setAlpha(active ? 1 : 0.78);
+      view.container.setScale(active ? 1.08 : 1);
+    }
+    this.aimGraphics.clear();
+  }
+
+  isOverSkillButton(pointer) {
+    const button = this.skillButtons.get('fireball');
+    if (!button) return false;
+    const p = button.container.getWorldTransformMatrix().transformPoint(0, 0);
+    return Phaser.Math.Distance.Between(pointer.x, pointer.y, p.x, p.y) < 48;
+  }
+
+  onArenaPointerDown(pointer) {
+    if (!this.selectedAbility || this.aimPointerId !== null || this.isOverSkillButton(pointer)) return;
+    if (pointer.wasTouch && pointer.x < this.scale.width * 0.46) return;
+    this.aimPointerId = pointer.id;
+    this.aimTarget = { x: pointer.worldX, y: pointer.worldY };
+    this.drawAim();
+  }
+
+  onArenaPointerMove(pointer) {
+    if (pointer.id !== this.aimPointerId) return;
+    this.aimTarget = { x: pointer.worldX, y: pointer.worldY };
+    this.drawAim();
+  }
+
+  onArenaPointerUp(pointer) {
+    if (pointer.id !== this.aimPointerId) return;
+    const target = { x: pointer.worldX, y: pointer.worldY };
+    const ability = this.selectedAbility;
+    this.aimPointerId = null;
+    this.aimTarget = null;
+    this.aimGraphics.clear();
+    if (ability === 'fireball') this.castFireball(target.x, target.y);
+  }
+
+  drawAim() {
+    this.aimGraphics.clear();
+    if (!this.aimTarget || !this.selectedAbility) return;
+    this.aimGraphics.lineStyle(3, 0xffc15b, 0.85);
+    this.aimGraphics.lineBetween(this.hero.x, this.hero.y, this.aimTarget.x, this.aimTarget.y);
+    this.aimGraphics.fillStyle(0xffd27a, 0.9);
+    this.aimGraphics.fillCircle(this.aimTarget.x, this.aimTarget.y, 7);
+  }
+
   createRemotePlayer(player) {
     const sprite = this.add.image(player.x, player.y, 'warlock-hero').setTint(0xd58c70).setDepth(9);
     const label = this.add.text(player.x, player.y - 34, 'Opponent', {
@@ -121,6 +211,10 @@ export class ArenaScene extends Phaser.Scene {
     for (const player of players) {
       if (player.id === this.network.playerId) {
         this.hero.setPosition(player.x, player.y);
+        if (Number.isFinite(player.facingX) && Number.isFinite(player.facingY) &&
+            (player.facingX || player.facingY)) {
+          this.hero.rotation = Math.atan2(player.facingY, player.facingX) + Math.PI / 2;
+        }
         this.currentHealth = player.health;
         this.maxHealth = player.maxHealth;
         this.healthLabel?.setText(`HP: ${Math.ceil(player.health)} / ${player.maxHealth}`);
@@ -133,6 +227,9 @@ export class ArenaScene extends Phaser.Scene {
         this.remotePlayers.set(player.id, view);
       }
       view.sprite.setPosition(player.x, player.y);
+      if (player.facingX || player.facingY) {
+        view.sprite.rotation = Math.atan2(player.facingY, player.facingX) + Math.PI / 2;
+      }
       view.label.setPosition(player.x, player.y - 34);
       view.health = player.health;
     }
@@ -164,12 +261,8 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   handleCombatEvent(event) {
-    if (event.event === 'hit') {
-      this.cameras.main.shake(100, 0.002);
-    }
-    if (event.event === 'respawn') {
-      this.cameras.main.flash(180, 255, 220, 160);
-    }
+    if (event.event === 'hit') this.cameras.main.shake(100, 0.002);
+    if (event.event === 'respawn') this.cameras.main.flash(180, 255, 220, 160);
   }
 
   castFireball(worldX, worldY) {
@@ -178,6 +271,12 @@ export class ArenaScene extends Phaser.Scene {
     const angle = Phaser.Math.Angle.Between(this.hero.x, this.hero.y, worldX, worldY);
     this.network.castFireball(angle);
     this.lastLocalCastAt = now;
+    this.selectedAbility = null;
+    for (const view of this.skillButtons.values()) {
+      view.ring.setStrokeStyle(3, 0x89764b, 1);
+      view.icon.setAlpha(0.78);
+      view.container.setScale(1);
+    }
   }
 
   setConnectionStatus(status) {
@@ -201,13 +300,13 @@ export class ArenaScene extends Phaser.Scene {
     const direction = new Phaser.Math.Vector2(x, y);
     if (direction.lengthSq() > 1) direction.normalize();
 
+    if (direction.lengthSq() > 0.001) {
+      this.hero.rotation = Math.atan2(direction.y, direction.x) + Math.PI / 2;
+    }
     if (this.network.connected) this.network.sendInput(direction.x, direction.y);
     else this.hero.setVelocity(direction.x * SPEED, direction.y * SPEED);
 
-    if (Phaser.Input.Keyboard.JustDown(this.keys.SPACE)) {
-      const pointer = this.input.activePointer;
-      this.castFireball(pointer.worldX, pointer.worldY);
-    }
+    if (Phaser.Input.Keyboard.JustDown(this.keys.SPACE)) this.toggleAbility('fireball');
     this.heroLabel.setPosition(this.hero.x, this.hero.y - 34);
     this.touch.update();
   }
