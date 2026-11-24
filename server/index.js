@@ -14,7 +14,7 @@ function sendSnapshot() {
   const payload = JSON.stringify({
     type: 'snapshot',
     players: [...players.values()].map(({ id, x, y, health, maxHealth, damagePoints, facingX, facingY }) => ({
-      id, x, y, health, maxHealth, damagePoints
+      id, x, y, health, maxHealth, damagePoints, facingX, facingY
     })),
     projectiles: [...projectiles.values()].map(({ id, x, y }) => ({ id, x, y }))
   });
