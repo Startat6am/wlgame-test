@@ -17,6 +17,8 @@ export class ArenaScene extends Phaser.Scene {
     this.aimPointerId = null;
     this.aimTarget = null;
     this.skillButtonPointerId = null;
+    this.localProjectiles = [];
+    this.nextFpsUpdate = 0;
   }
 
   create() {
@@ -46,6 +48,10 @@ export class ArenaScene extends Phaser.Scene {
     this.healthLabel = this.add.text(18, 36, 'HP: 100 / 100', {
       fontFamily: 'Arial, sans-serif', fontSize: '13px', color: '#f0dca2'
     }).setScrollFactor(0).setDepth(900);
+    this.fpsLabel = this.add.text(this.scale.width - 18, 14, 'FPS: --', {
+      fontFamily: 'Arial, sans-serif', fontSize: '13px', color: '#cbd9ad',
+      stroke: '#10150f', strokeThickness: 3
+    }).setOrigin(1, 0).setScrollFactor(0).setDepth(900);
 
     this.aimGraphics = this.add.graphics().setDepth(850);
     this.input.on('pointerdown', this.onArenaPointerDown, this);
@@ -271,11 +277,46 @@ export class ArenaScene extends Phaser.Scene {
     if (event.event === 'respawn') this.cameras.main.flash(180, 255, 220, 160);
   }
 
+  spawnLocalFireball(angle) {
+    const direction = new Phaser.Math.Vector2(Math.cos(angle), Math.sin(angle));
+    const startX = this.hero.x + direction.x * 26;
+    const startY = this.hero.y + direction.y * 26;
+    const projectile = this.add.container(startX, startY).setDepth(30);
+    projectile.add([
+      this.add.circle(0, 0, 15, 0xff6a1a, 0.22),
+      this.add.circle(0, 0, 10, 0xff8b27, 0.95).setStrokeStyle(2, 0xffe7a0, 1),
+      this.add.circle(-2, -2, 4, 0xfff3bd, 1)
+    ]);
+    this.localProjectiles.push({
+      view: projectile,
+      velocityX: direction.x * FIREBALL.projectileSpeed.value,
+      velocityY: direction.y * FIREBALL.projectileSpeed.value,
+      travelled: 0
+    });
+  }
+
+  updateLocalProjectiles(delta) {
+    const maxRange = FIREBALL.range.value;
+    for (let i = this.localProjectiles.length - 1; i >= 0; i -= 1) {
+      const projectile = this.localProjectiles[i];
+      const stepX = projectile.velocityX * delta / 1000;
+      const stepY = projectile.velocityY * delta / 1000;
+      projectile.view.x += stepX;
+      projectile.view.y += stepY;
+      projectile.travelled += Math.hypot(stepX, stepY);
+      if (projectile.travelled >= maxRange) {
+        projectile.view.destroy();
+        this.localProjectiles.splice(i, 1);
+      }
+    }
+  }
+
   castFireball(worldX, worldY) {
     const now = this.time.now;
-    if (!this.network.connected || now - this.lastLocalCastAt < FIREBALL.cooldown.value * 1000) return;
+    if (now - this.lastLocalCastAt < FIREBALL.cooldown.value * 1000) return;
     const angle = Phaser.Math.Angle.Between(this.hero.x, this.hero.y, worldX, worldY);
-    this.network.castFireball(angle);
+    if (this.network.connected) this.network.castFireball(angle);
+    else this.spawnLocalFireball(angle);
     this.lastLocalCastAt = now;
     this.selectedAbility = null;
     for (const view of this.skillButtons.values()) {
@@ -292,7 +333,14 @@ export class ArenaScene extends Phaser.Scene {
     if (dot) dot.classList.toggle('online', status === 'Сервер подключён');
   }
 
-  update() {
+  update(_time, delta) {
+    this.updateLocalProjectiles(delta);
+    if (this.time.now >= this.nextFpsUpdate) {
+      const actualFps = this.game.loop.actualFps;
+      this.fpsLabel.setText(`FPS: ${Number.isFinite(actualFps) ? Math.round(actualFps) : '--'}`);
+      this.fpsLabel.setPosition(this.scale.width - 18, 14);
+      this.nextFpsUpdate = this.time.now + 250;
+    }
     const left = this.cursors.left.isDown || this.keys.A.isDown;
     const right = this.cursors.right.isDown || this.keys.D.isDown;
     const up = this.cursors.up.isDown || this.keys.W.isDown;
