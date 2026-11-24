@@ -5,7 +5,7 @@
 - **Repository:** https://github.com/Startat6am/wlgame-test
 - **Branch:** `main`
 - **Checkpoint date:** 2026-11-24
-- **Latest application-code commit:** `9e510f2789fda7d0057154aa16c799c6e9c1be95` — makes FIRE button cast immediately in the hero's facing direction.
+- **Latest application-code commit:** update after the FIRE aim-stick change; verify current `main` HEAD.
 - **Previous verified code checkpoint:** `32b211a156441d19f0377cc9274261460813dc15` — CI passed on run #25.
 - **Current code commit CI:** pending at the time this handoff was last updated; verify the run for the exact HEAD SHA.
 - **Handoff file was introduced in:** `be8deb33b3f3d10df5a67218e368213492f524bb`.
@@ -19,7 +19,7 @@
 3. Server projectile radius checks use squared distance instead of `Math.hypot()`.
 4. `docs/PERFORMANCE.md` documents the performance audit, implemented changes, measurement strategy, and backlog.
 5. `ROADMAP.md` records project phases and acceptance criteria.
-6. The FIRE button now casts a Fireball immediately in the hero's current facing direction. Keyboard aiming remains available with Space followed by a target click.
+6. FIRE is an aim-stick action: press and drag on the button to choose a direction, then release to cast. A stationary tap fires in the hero's current facing direction. Keyboard aiming remains available with Space followed by a target click.
 
 This is a verified source checkpoint, not a claim that the game is complete or all these changes are deployed.
 
@@ -55,7 +55,7 @@ The online server is intended to be authoritative for movement, projectile hits,
 ## 5. Known incomplete work and constraints
 
 - Offline Fireball currently displays visual projectiles; offline collision, damage, knockback, death, and respawn still need implementation and tests.
-- FIRE button behavior was changed to immediate cast; verify mouse and touch pointer-up handling in a real browser after deployment.
+- FIRE now supports press-drag-release directional aiming and tap-to-fire-forward; verify mouse and touch pointer handling in a real browser after deployment.
 - No repeatable desktop/phone performance baseline has been captured yet. Do not claim performance gains without same-device before/after measurements.
 - Object pools, texture atlases, DPR caps, and spatial partitioning remain profiling-driven backlog items.
 - Client WebSocket URL needs explicit production configuration.
@@ -87,7 +87,7 @@ Do not reconstruct work from chat memory until the repository and branch have be
 1. Confirm the latest Vercel production deployment completes, then compare its deployed SHA with current `main`.
 2. Add a lightweight frame-time monitor (rolling samples, p95/p99, max frame time) and capture real desktop/mobile baselines.
 3. Validate joystick redraw and 20 Hz input behavior in browser on desktop and mobile.
-4. Browser-test the FIRE button on desktop and touch devices; verify cooldown feedback and projectile visibility in both offline and connected modes.
+4. Browser-test FIRE aim-stick behavior on desktop and touch devices: drag direction, stationary tap forward, release outside the button, cooldown, and projectile visibility in offline and connected modes.
 5. Complete offline Fireball collision/damage/knockback/death/respawn with automated tests.
 5. Configure and deploy the authoritative WebSocket server on persistent hosting; test multi-client sessions.
 
