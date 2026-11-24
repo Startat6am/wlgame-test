@@ -196,6 +196,11 @@ export class ArenaScene extends Phaser.Scene {
     return Phaser.Math.Distance.Between(pointer.x, pointer.y, x, y) < 48;
   }
 
+  pointerToWorld(pointer) {
+    const camera = this.cameras.main;
+    return screenToWorld(pointer.x + camera.scrollX, pointer.y + camera.scrollY);
+  }
+
   onArenaPointerDown(pointer) {
     // Handle the skill button in screen coordinates; this avoids container hit-test
     // differences between mouse and touch input on mobile browsers.
@@ -210,7 +215,7 @@ export class ArenaScene extends Phaser.Scene {
     if (!this.selectedAbility || this.aimPointerId !== null) return;
     if (pointer.wasTouch && pointer.x < this.scale.width * 0.46) return;
     this.aimPointerId = pointer.id;
-    this.aimTarget = screenToWorld(pointer.worldX, pointer.worldY);
+    this.aimTarget = this.pointerToWorld(pointer);
     this.drawAim();
   }
 
@@ -228,19 +233,20 @@ export class ArenaScene extends Phaser.Scene {
       }
       if (distance >= 10) {
         const direction = screenVectorToWorld(dx, dy);
-        this.skillButtonAim = Math.atan2(direction.y, direction.x);
+        const length = Math.hypot(direction.x, direction.y) || 1;
+        this.skillButtonAim = { x: direction.x / length, y: direction.y / length };
       } else this.skillButtonAim = null;
       return;
     }
     if (pointer.id !== this.aimPointerId) return;
-    this.aimTarget = screenToWorld(pointer.worldX, pointer.worldY);
+    this.aimTarget = this.pointerToWorld(pointer);
     this.drawAim();
   }
 
   onArenaPointerUp(pointer) {
     if (pointer.id === this.skillButtonPointerId) {
-      const draggedAngle = this.skillButtonAim;
-      const angle = draggedAngle ?? (this.hero.rotation - Math.PI / 2);
+      const draggedAim = this.skillButtonAim;
+      const angle = this.hero.rotation - Math.PI / 2;
       this.skillButtonPointerId = null;
       this.skillButtonOrigin = null;
       this.skillButtonAim = null;
@@ -250,16 +256,14 @@ export class ArenaScene extends Phaser.Scene {
         button.text.setPosition(button.baseIconX, button.baseIconY + 1);
       }
       // Drag angle is measured on the projected screen; tap direction is already in world space.
-      const aim = draggedAngle === null
-        ? { x: Math.cos(angle), y: Math.sin(angle) }
-        : screenVectorToWorld(Math.cos(angle), Math.sin(angle));
+      const aim = draggedAim ?? { x: Math.cos(angle), y: Math.sin(angle) };
       const targetX = this.hero.x + aim.x * FIREBALL.range.value;
       const targetY = this.hero.y + aim.y * FIREBALL.range.value;
       this.castFireball(targetX, targetY);
       return;
     }
     if (pointer.id !== this.aimPointerId) return;
-    const target = screenToWorld(pointer.worldX, pointer.worldY);
+    const target = this.pointerToWorld(pointer);
     const ability = this.selectedAbility;
     this.aimPointerId = null;
     this.aimTarget = null;
