@@ -17,6 +17,8 @@ export class ArenaScene extends Phaser.Scene {
     this.aimPointerId = null;
     this.aimTarget = null;
     this.skillButtonPointerId = null;
+    this.skillButtonOrigin = null;
+    this.skillButtonAim = null;
     this.localProjectiles = [];
     this.nextFpsUpdate = 0;
     this.networkInputAccumulator = 0;
@@ -138,7 +140,7 @@ export class ArenaScene extends Phaser.Scene {
       color: '#20190f', align: 'center'
     }).setOrigin(0.5);
     container.add([ring, icon, text]);
-    this.skillButtons.set(id, { container, ring, icon, text });
+    this.skillButtons.set(id, { container, ring, icon, text, baseIconX: 0, baseIconY: 0 });
   }
 
   layoutSkillBar() {
@@ -169,9 +171,11 @@ export class ArenaScene extends Phaser.Scene {
     // Handle the skill button in screen coordinates; this avoids container hit-test
     // differences between mouse and touch input on mobile browsers.
     if (this.isOverSkillButton(pointer)) {
-      // FIRE is an action button: cast immediately in the hero's current facing
-      // direction. Keyboard aiming remains available through Space + target click.
+      // FIRE behaves like a small aim stick: press, drag to choose direction,
+      // release to cast. A stationary tap fires in the hero's facing direction.
       this.skillButtonPointerId = pointer.id;
+      this.skillButtonOrigin = { x: pointer.x, y: pointer.y };
+      this.skillButtonAim = null;
       return;
     }
     if (!this.selectedAbility || this.aimPointerId !== null) return;
@@ -182,6 +186,20 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   onArenaPointerMove(pointer) {
+    if (pointer.id === this.skillButtonPointerId && this.skillButtonOrigin) {
+      const dx = pointer.x - this.skillButtonOrigin.x;
+      const dy = pointer.y - this.skillButtonOrigin.y;
+      const distance = Math.hypot(dx, dy);
+      const maxOffset = 18;
+      const scale = distance > maxOffset ? maxOffset / distance : 1;
+      const button = this.skillButtons.get('fireball');
+      if (button) {
+        button.icon.setPosition(dx * scale, dy * scale);
+        button.text.setPosition(dx * scale, dy * scale + 1);
+      }
+      this.skillButtonAim = distance >= 10 ? Math.atan2(dy, dx) : null;
+      return;
+    }
     if (pointer.id !== this.aimPointerId) return;
     this.aimTarget = { x: pointer.worldX, y: pointer.worldY };
     this.drawAim();
@@ -189,8 +207,15 @@ export class ArenaScene extends Phaser.Scene {
 
   onArenaPointerUp(pointer) {
     if (pointer.id === this.skillButtonPointerId) {
+      const angle = this.skillButtonAim ?? (this.hero.rotation - Math.PI / 2);
       this.skillButtonPointerId = null;
-      const angle = this.hero.rotation - Math.PI / 2;
+      this.skillButtonOrigin = null;
+      this.skillButtonAim = null;
+      const button = this.skillButtons.get('fireball');
+      if (button) {
+        button.icon.setPosition(button.baseIconX, button.baseIconY);
+        button.text.setPosition(button.baseIconX, button.baseIconY + 1);
+      }
       const targetX = this.hero.x + Math.cos(angle) * FIREBALL.range.value;
       const targetY = this.hero.y + Math.sin(angle) * FIREBALL.range.value;
       this.castFireball(targetX, targetY);
