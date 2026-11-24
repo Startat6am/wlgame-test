@@ -1,9 +1,11 @@
 export class NetworkClient {
-  constructor(onState, onStatus) {
+  constructor(onState, onStatus, onWelcome) {
     this.onState = onState;
     this.onStatus = onStatus;
+    this.onWelcome = onWelcome;
     this.socket = null;
     this.connected = false;
+    this.playerId = null;
   }
 
   connect() {
@@ -18,6 +20,10 @@ export class NetworkClient {
       this.socket.addEventListener('message', (event) => {
         try {
           const message = JSON.parse(event.data);
+          if (message.type === 'welcome' && typeof message.id === 'string') {
+            this.playerId = message.id;
+            this.onWelcome?.(message.id);
+          }
           if (message.type === 'snapshot') this.onState(message.players ?? []);
         } catch {
           // Ignore malformed packets; server state is never trusted blindly.
@@ -25,6 +31,7 @@ export class NetworkClient {
       });
       this.socket.addEventListener('close', () => {
         this.connected = false;
+        this.playerId = null;
         this.onStatus('Локальная игра');
       });
       this.socket.addEventListener('error', () => {
