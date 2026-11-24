@@ -16,8 +16,6 @@ export class ArenaScene extends Phaser.Scene {
     this.cursors = this.input.keyboard.createCursorKeys();
     this.keys = this.input.keyboard.addKeys('W,A,S,D');
     this.touch = new TouchControls(this);
-    this.networkPlayers = new Map();
-
     this.physics.world.setBounds(0, 0, WORLD.width, WORLD.height);
     this.cameras.main.setBounds(0, 0, WORLD.width, WORLD.height);
     this.cameras.main.startFollow(this.hero, true, 0.08, 0.08);
@@ -36,7 +34,6 @@ export class ArenaScene extends Phaser.Scene {
       stroke: '#10150f',
       strokeThickness: 4
     }).setScrollFactor(0).setDepth(900);
-
     this.add.text(18, 42, 'Перемещайтесь по арене и исследуйте управление', {
       fontFamily: 'Arial, sans-serif',
       fontSize: '12px',
@@ -56,7 +53,6 @@ export class ArenaScene extends Phaser.Scene {
     g.lineStyle(1, 0x9aa47a, 0.08);
     for (let x = 0; x <= WORLD.width; x += 64) g.lineBetween(x, 0, x, WORLD.height);
     for (let y = 0; y <= WORLD.height; y += 64) g.lineBetween(0, y, WORLD.width, y);
-
     g.lineStyle(12, 0x171f17, 0.9);
     g.strokeRect(8, 8, WORLD.width - 16, WORLD.height - 16);
     g.lineStyle(3, 0xb4a477, 0.55);
@@ -69,13 +65,11 @@ export class ArenaScene extends Phaser.Scene {
       [480, 720, 88], [250, 560, 48], [710, 590, 42]
     ];
     rocks.forEach(([x, y, radius]) => {
-      const rock = this.add.circle(x, y, radius, 0x20291f, 1)
-        .setStrokeStyle(5, 0x657253, 0.9);
+      const rock = this.add.circle(x, y, radius, 0x20291f, 1).setStrokeStyle(5, 0x657253, 0.9);
       this.physics.add.existing(rock, true);
       this.obstacles.add(rock);
       this.add.circle(x - radius * 0.2, y - radius * 0.25, radius * 0.48, 0x89906b, 0.18);
     });
-
     this.add.circle(800, 500, 150, 0x9b8752, 0.05).setStrokeStyle(3, 0xc6b77e, 0.24);
     this.add.circle(800, 500, 118, 0x000000, 0).setStrokeStyle(1, 0xc6b77e, 0.18);
   }
@@ -107,10 +101,8 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   applySnapshot(players) {
-    const remote = players.find((player) => player.id === this.network.playerId);
-    if (remote && this.network.connected) {
-      this.hero.setPosition(remote.x, remote.y);
-    }
+    const ownPlayer = players.find((player) => player.id === this.network.playerId);
+    if (ownPlayer && this.network.connected) this.hero.setPosition(ownPlayer.x, ownPlayer.y);
   }
 
   setConnectionStatus(status) {
@@ -125,7 +117,6 @@ export class ArenaScene extends Phaser.Scene {
     const right = this.cursors.right.isDown || this.keys.D.isDown;
     const up = this.cursors.up.isDown || this.keys.W.isDown;
     const down = this.cursors.down.isDown || this.keys.S.isDown;
-
     let x = Number(right) - Number(left);
     let y = Number(down) - Number(up);
     if (this.touch.vector.lengthSq() > 0) {
@@ -140,7 +131,6 @@ export class ArenaScene extends Phaser.Scene {
     } else {
       this.hero.setVelocity(direction.x * SPEED, direction.y * SPEED);
     }
-
     const label = this.children.getByName('hero-label');
     if (label) label.setPosition(this.hero.x, this.hero.y - 34);
     this.touch.update();
