@@ -288,7 +288,7 @@ export class ArenaScene extends Phaser.Scene {
     const label = this.add.text(p.x, p.y - 42, 'Opponent', {
       fontFamily: 'Arial, sans-serif', fontSize: '11px', color: '#ffd1bd',
       stroke: '#172017', strokeThickness: 3
-    }).setOrigin(0.5, 1).setDepth(11);
+    }).setOrigin(0.5, 1).setDepth(p.y + 2);
     return { sprite, label, health: player.health, maxHealth: player.maxHealth };
   }
 
