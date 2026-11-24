@@ -149,7 +149,7 @@ export class ArenaScene extends Phaser.Scene {
     this.heroLabel = this.add.text(p.x, p.y - 46, 'Warlock', {
       fontFamily: 'Georgia, serif', fontSize: '12px', color: '#f1e6bd',
       stroke: '#172017', strokeThickness: 3
-    }).setOrigin(0.5, 1).setDepth(p.y + 11);
+    }).setOrigin(0.5, 1).setDepth(p.y + 2);
   }
 
   createSkillBar() {
