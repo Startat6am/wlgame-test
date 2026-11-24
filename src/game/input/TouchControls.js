@@ -7,6 +7,7 @@ export class TouchControls {
   constructor(scene) {
     this.scene = scene;
     this.pointerId = null;
+    // Fixed virtual-stick anchor: it never jumps to the finger position.
     this.origin = new Phaser.Math.Vector2(92, scene.scale.height - 104);
     this.vector = new Phaser.Math.Vector2();
     this.graphics = scene.add.graphics().setScrollFactor(0).setDepth(1000);
@@ -20,12 +21,11 @@ export class TouchControls {
 
   onDown(pointer) {
     if (!pointer.wasTouch || this.pointerId !== null) return;
-    if (pointer.x > this.scene.scale.width * 0.48 || pointer.y < this.scene.scale.height * 0.35) return;
+    // The stick is fixed at the bottom-left. Accept touches in its nearby
+    // activation area, but calculate movement from the fixed anchor.
+    const { width, height } = this.scene.scale;
+    if (pointer.x > Math.min(210, width * 0.42) || pointer.y < height - 230 || pointer.y > height - 38) return;
     this.pointerId = pointer.id;
-    this.origin.set(
-      Phaser.Math.Clamp(pointer.x, 66, this.scene.scale.width * 0.42),
-      Phaser.Math.Clamp(pointer.y, this.scene.scale.height * 0.52, this.scene.scale.height - 70)
-    );
     this.onMove(pointer);
   }
 
@@ -48,9 +48,8 @@ export class TouchControls {
   }
 
   onResize(gameSize) {
-    if (this.pointerId === null) {
-      this.origin.set(92, gameSize.height - 104);
-    }
+    this.origin.set(92, gameSize.height - 104);
+    if (this.pointerId !== null) this.vector.set(0, 0);
   }
 
   update() {
