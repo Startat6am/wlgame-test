@@ -169,8 +169,9 @@ export class ArenaScene extends Phaser.Scene {
     // Handle the skill button in screen coordinates; this avoids container hit-test
     // differences between mouse and touch input on mobile browsers.
     if (this.isOverSkillButton(pointer)) {
+      // FIRE is an action button: cast immediately in the hero's current facing
+      // direction. Keyboard aiming remains available through Space + target click.
       this.skillButtonPointerId = pointer.id;
-      this.toggleAbility('fireball');
       return;
     }
     if (!this.selectedAbility || this.aimPointerId !== null) return;
@@ -189,6 +190,10 @@ export class ArenaScene extends Phaser.Scene {
   onArenaPointerUp(pointer) {
     if (pointer.id === this.skillButtonPointerId) {
       this.skillButtonPointerId = null;
+      const angle = this.hero.rotation - Math.PI / 2;
+      const targetX = this.hero.x + Math.cos(angle) * FIREBALL.range.value;
+      const targetY = this.hero.y + Math.sin(angle) * FIREBALL.range.value;
+      this.castFireball(targetX, targetY);
       return;
     }
     if (pointer.id !== this.aimPointerId) return;
