@@ -264,13 +264,14 @@ export class ArenaScene extends Phaser.Scene {
       return;
     }
     if (pointer.id !== this.aimPointerId) return;
-    this.aimTarget = { x: pointer.worldX, y: pointer.worldY };
+    this.aimTarget = screenToWorld(pointer.worldX, pointer.worldY);
     this.drawAim();
   }
 
   onArenaPointerUp(pointer) {
     if (pointer.id === this.skillButtonPointerId) {
-      const angle = this.skillButtonAim ?? (this.hero.rotation - Math.PI / 2);
+      const draggedAngle = this.skillButtonAim;
+      const angle = draggedAngle ?? (this.hero.rotation - Math.PI / 2);
       this.skillButtonPointerId = null;
       this.skillButtonOrigin = null;
       this.skillButtonAim = null;
@@ -279,7 +280,10 @@ export class ArenaScene extends Phaser.Scene {
         button.icon.setPosition(button.baseIconX, button.baseIconY);
         button.text.setPosition(button.baseIconX, button.baseIconY + 1);
       }
-      const aim = screenVectorToWorld(Math.cos(angle), Math.sin(angle));
+      // Drag angle is measured on the projected screen; tap direction is already in world space.
+      const aim = draggedAngle === null
+        ? { x: Math.cos(angle), y: Math.sin(angle) }
+        : screenVectorToWorld(Math.cos(angle), Math.sin(angle));
       const targetX = this.hero.x + aim.x * FIREBALL.range.value;
       const targetY = this.hero.y + aim.y * FIREBALL.range.value;
       this.castFireball(targetX, targetY);
@@ -297,10 +301,12 @@ export class ArenaScene extends Phaser.Scene {
   drawAim() {
     this.aimGraphics.clear();
     if (!this.aimTarget || !this.selectedAbility) return;
+    const hero = worldToScreen(this.hero.x, this.hero.y);
+    const target = worldToScreen(this.aimTarget.x, this.aimTarget.y);
     this.aimGraphics.lineStyle(3, 0xffc15b, 0.85);
-    this.aimGraphics.lineBetween(this.hero.x, this.hero.y, this.aimTarget.x, this.aimTarget.y);
+    this.aimGraphics.lineBetween(hero.x, hero.y, target.x, target.y);
     this.aimGraphics.fillStyle(0xffd27a, 0.9);
-    this.aimGraphics.fillCircle(this.aimTarget.x, this.aimTarget.y, 7);
+    this.aimGraphics.fillCircle(target.x, target.y, 7);
   }
 
   createRemotePlayer(player) {
