@@ -19,6 +19,7 @@ export class ArenaScene extends Phaser.Scene {
     this.skillButtonPointerId = null;
     this.localProjectiles = [];
     this.nextFpsUpdate = 0;
+    this.networkInputAccumulator = 0;
   }
 
   create() {
@@ -357,8 +358,16 @@ export class ArenaScene extends Phaser.Scene {
     if (direction.lengthSq() > 0.001) {
       this.hero.rotation = Math.atan2(direction.y, direction.x) + Math.PI / 2;
     }
-    if (this.network.connected) this.network.sendInput(direction.x, direction.y);
-    else this.hero.setVelocity(direction.x * SPEED, direction.y * SPEED);
+    if (this.network.connected) {
+      // Match the input send rate to the server's 20 Hz simulation, not render FPS.
+      this.networkInputAccumulator += Math.min(delta, 100);
+      if (this.networkInputAccumulator >= 50) {
+        this.networkInputAccumulator %= 50;
+        this.network.sendInput(direction.x, direction.y);
+      }
+    } else {
+      this.hero.setVelocity(direction.x * SPEED, direction.y * SPEED);
+    }
 
     if (Phaser.Input.Keyboard.JustDown(this.keys.SPACE)) this.toggleAbility('fireball');
     this.heroLabel.setPosition(this.hero.x, this.hero.y - 34);
