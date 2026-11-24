@@ -106,7 +106,9 @@ setInterval(() => {
     let consumed = false;
     for (const target of players.values()) {
       if (target.id === projectile.ownerId || projectile.hitIds.has(target.id)) continue;
-      if (Math.hypot(target.x - projectile.x, target.y - projectile.y) > 25) continue;
+      const dx = target.x - projectile.x;
+      const dy = target.y - projectile.y;
+      if (dx * dx + dy * dy > 25 * 25) continue;
 
       projectile.hitIds.add(target.id);
       target.health = Math.max(0, target.health - FIREBALL.damage);
