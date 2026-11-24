@@ -6,7 +6,7 @@
 - **Branch:** `main`
 - **Checkpoint date:** 2026-11-24
 - **Current isometric work branch:** `feature/isometric-arena`.
-- **Latest isometric implementation commit:** `1e5697993305e15c4136136fab4753b174e14516` (test script includes projection tests).
+- **Latest isometric implementation commit:** `ed215b9f0b8215980842589c55c16817cc8134ad` (also includes authoritative facing vectors in snapshots).
 - **Base commit:** `b30dccee049e99af70a9563deccb2f97676183b3`.
 - **Previous verified code checkpoint:** `32b211a156441d19f0377cc9274261460813dc15` — CI passed on run #25.
 - **Current code commit CI:** pending at the time this handoff was last updated; verify the run for the exact HEAD SHA.
@@ -90,8 +90,11 @@ Do not reconstruct work from chat memory until the repository and branch have be
 
 - The simulation and WebSocket server continue to use the existing Cartesian world coordinates.
 - `src/game/geometry/isometric.js` owns world/screen projection and inverse transforms; tests live beside it.
+- Server snapshots now include `facingX`/`facingY` so the client can orient projected local and remote actors consistently.
 - `ArenaScene.js` renders the arena as a diamond with diagonal grid lines, projected obstacles, actors, aim marker, and projectiles.
 - Keyboard/touch screen directions and FIRE drag aim are converted back to simulation directions; a stationary FIRE tap preserves the hero's world-facing direction.
+- PR: https://github.com/Startat6am/wlgame-test/pull/1 (draft).
+- Latest observed commit status: Vercel check pending. Vercel deployment inspection returned 403 Forbidden; no deployment status is claimed.
 - Not yet verified: Vite production build, CI, browser rendering, collision alignment, camera behavior on phone aspect ratios, and live network aim direction. Do not merge or describe this as production-ready until those checks pass.
 
 ## 8. Next actions (priority order)
