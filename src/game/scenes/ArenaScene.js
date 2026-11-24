@@ -16,6 +16,7 @@ export class ArenaScene extends Phaser.Scene {
     this.selectedAbility = null;
     this.aimPointerId = null;
     this.aimTarget = null;
+    this.skillButtonPointerId = null;
   }
 
   create() {
@@ -129,12 +130,7 @@ export class ArenaScene extends Phaser.Scene {
       fontFamily: 'Arial, sans-serif', fontSize: '11px', fontStyle: 'bold',
       color: '#20190f', align: 'center'
     }).setOrigin(0.5);
-    const hit = this.add.circle(0, 0, 39, 0xffffff, 0.001).setInteractive();
-    hit.on('pointerdown', (pointer) => {
-      pointer.event?.stopPropagation?.();
-      this.toggleAbility(id);
-    });
-    container.add([ring, icon, text, hit]);
+    container.add([ring, icon, text]);
     this.skillButtons.set(id, { container, ring, icon, text });
   }
 
@@ -157,14 +153,20 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   isOverSkillButton(pointer) {
-    const button = this.skillButtons.get('fireball');
-    if (!button) return false;
-    const p = button.container.getWorldTransformMatrix().transformPoint(0, 0);
-    return Phaser.Math.Distance.Between(pointer.x, pointer.y, p.x, p.y) < 48;
+    const x = this.scale.width - 62;
+    const y = this.scale.height - (this.scale.height > this.scale.width ? 104 : 82);
+    return Phaser.Math.Distance.Between(pointer.x, pointer.y, x, y) < 48;
   }
 
   onArenaPointerDown(pointer) {
-    if (!this.selectedAbility || this.aimPointerId !== null || this.isOverSkillButton(pointer)) return;
+    // Handle the skill button in screen coordinates; this avoids container hit-test
+    // differences between mouse and touch input on mobile browsers.
+    if (this.isOverSkillButton(pointer)) {
+      this.skillButtonPointerId = pointer.id;
+      this.toggleAbility('fireball');
+      return;
+    }
+    if (!this.selectedAbility || this.aimPointerId !== null) return;
     if (pointer.wasTouch && pointer.x < this.scale.width * 0.46) return;
     this.aimPointerId = pointer.id;
     this.aimTarget = { x: pointer.worldX, y: pointer.worldY };
@@ -178,6 +180,10 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   onArenaPointerUp(pointer) {
+    if (pointer.id === this.skillButtonPointerId) {
+      this.skillButtonPointerId = null;
+      return;
+    }
     if (pointer.id !== this.aimPointerId) return;
     const target = { x: pointer.worldX, y: pointer.worldY };
     const ability = this.selectedAbility;
