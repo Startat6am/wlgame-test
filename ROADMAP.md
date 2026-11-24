@@ -88,6 +88,14 @@ Status note: the latest offline Fireball/FPS change was committed as `d4db82e` i
 - [ ] Monitoring, logging, backups, and deployment rollback.
 - [ ] Public beta, issue triage, and stable release.
 
+### P6a — Isometric arena conversion
+- [x] Add a 2D isometric projection layer while preserving server simulation coordinates.
+- [x] Render diamond arena, diagonal tile grid, and projected obstacles.
+- [x] Project local/remote players and projectiles; convert movement and targeting directions.
+- [ ] Verify collision alignment, camera bounds, and desktop/mobile layouts in a browser.
+- [ ] Verify FIRE tap/drag and keyboard/touch movement in local and network modes.
+- [ ] Pass CI/build and merge only after visual regression checks.
+
 ## Definition of done for each phase
 
 A phase is complete only when:
