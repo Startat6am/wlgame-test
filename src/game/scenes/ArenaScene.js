@@ -4,6 +4,37 @@ import { TouchControls } from '../input/TouchControls.js';
 import { NetworkClient } from '../../net/NetworkClient.js';
 
 const WORLD = { width: 1600, height: 1000 };
+const ISO_VIEW = { width: 2000, height: 1200, centerX: 1000, centerY: 600, xScale: 0.75, yScale: 0.38 };
+
+function worldToScreen(x, y) {
+  const dx = x - WORLD.width / 2;
+  const dy = y - WORLD.height / 2;
+  return {
+    x: ISO_VIEW.centerX + (dx - dy) * ISO_VIEW.xScale,
+    y: ISO_VIEW.centerY + (dx + dy) * ISO_VIEW.yScale
+  };
+}
+
+function screenToWorld(x, y) {
+  const sx = (x - ISO_VIEW.centerX) / ISO_VIEW.xScale;
+  const sy = (y - ISO_VIEW.centerY) / ISO_VIEW.yScale;
+  return {
+    x: WORLD.width / 2 + (sx + sy) / 2,
+    y: WORLD.height / 2 + (sy - sx) / 2
+  };
+}
+
+function screenVectorToWorld(x, y) {
+  const sx = x / ISO_VIEW.xScale;
+  const sy = y / ISO_VIEW.yScale;
+  return { x: (sx + sy) / 2, y: (sy - sx) / 2 };
+}
+
+function projectedAngle(x, y) {
+  const point = worldToScreen(x, y);
+  const origin = worldToScreen(0, 0);
+  return Math.atan2(point.y - origin.y, point.x - origin.x);
+}
 const SPEED = balance.baseline.movementSpeed.value;
 const FIREBALL = balance.abilities.find((ability) => ability.id === 'fireball');
 
@@ -31,8 +62,8 @@ export class ArenaScene extends Phaser.Scene {
     this.keys = this.input.keyboard.addKeys('W,A,S,D,SPACE');
     this.touch = new TouchControls(this);
     this.physics.world.setBounds(0, 0, WORLD.width, WORLD.height);
-    this.cameras.main.setBounds(0, 0, WORLD.width, WORLD.height);
-    this.cameras.main.startFollow(this.hero, true, 0.08, 0.08);
+    this.cameras.main.setBounds(0, 0, ISO_VIEW.width, ISO_VIEW.height);
+    this.cameras.main.startFollow(this.heroVisual, true, 0.08, 0.08);
     this.physics.add.collider(this.hero, this.obstacles);
     this.createSkillBar();
 
@@ -73,16 +104,32 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   drawArena() {
-    const g = this.add.graphics();
+    const g = this.add.graphics().setDepth(0);
     g.fillGradientStyle(0x344332, 0x344332, 0x263527, 0x263527, 1);
-    g.fillRect(0, 0, WORLD.width, WORLD.height);
-    g.lineStyle(1, 0x9aa47a, 0.08);
-    for (let x = 0; x <= WORLD.width; x += 64) g.lineBetween(x, 0, x, WORLD.height);
-    for (let y = 0; y <= WORLD.height; y += 64) g.lineBetween(0, y, WORLD.width, y);
-    g.lineStyle(12, 0x171f17, 0.9);
-    g.strokeRect(8, 8, WORLD.width - 16, WORLD.height - 16);
-    g.lineStyle(3, 0xb4a477, 0.55);
-    g.strokeRect(22, 22, WORLD.width - 44, WORLD.height - 44);
+    g.fillRect(0, 0, ISO_VIEW.width, ISO_VIEW.height);
+
+    // Diamond-shaped arena and diagonal tile grid.
+    const corners = [
+      worldToScreen(0, 0), worldToScreen(WORLD.width, 0),
+      worldToScreen(WORLD.width, WORLD.height), worldToScreen(0, WORLD.height)
+    ];
+    g.fillStyle(0x3b5038, 1);
+    g.fillPoints(corners.map((p) => new Phaser.Math.Vector2(p.x, p.y)), true);
+    g.lineStyle(1, 0xa7b48a, 0.13);
+    for (let x = 0; x <= WORLD.width; x += 80) {
+      const a = worldToScreen(x, 0);
+      const b = worldToScreen(x, WORLD.height);
+      g.lineBetween(a.x, a.y, b.x, b.y);
+    }
+    for (let y = 0; y <= WORLD.height; y += 80) {
+      const a = worldToScreen(0, y);
+      const b = worldToScreen(WORLD.width, y);
+      g.lineBetween(a.x, a.y, b.x, b.y);
+    }
+    g.lineStyle(14, 0x171f17, 0.95);
+    g.strokePoints(corners.map((p) => new Phaser.Math.Vector2(p.x, p.y)), true);
+    g.lineStyle(3, 0xb4a477, 0.65);
+    g.strokePoints(corners.map((p) => new Phaser.Math.Vector2(p.x, p.y)), true);
 
     this.obstacles = this.physics.add.staticGroup();
     const rocks = [
@@ -91,13 +138,23 @@ export class ArenaScene extends Phaser.Scene {
       [480, 720, 88], [250, 560, 48], [710, 590, 42]
     ];
     rocks.forEach(([x, y, radius]) => {
-      const rock = this.add.circle(x, y, radius, 0x20291f, 1).setStrokeStyle(5, 0x657253, 0.9);
+      const p = worldToScreen(x, y);
+      const rock = this.add.circle(x, y, radius, 0x20291f, 0).setStrokeStyle(0);
       this.physics.add.existing(rock, true);
       this.obstacles.add(rock);
-      this.add.circle(x - radius * 0.2, y - radius * 0.25, radius * 0.48, 0x89906b, 0.18);
+      rock.setVisible(false);
+      this.add.ellipse(p.x, p.y + radius * 0.16, radius * 1.65, radius * 0.78, 0x151d16, 0.48)
+        .setDepth(p.y - 1);
+      this.add.ellipse(p.x, p.y, radius * 1.45, radius * 0.72, 0x20291f, 1)
+        .setStrokeStyle(5, 0x657253, 0.95).setDepth(p.y);
+      this.add.ellipse(p.x - radius * 0.16, p.y - radius * 0.12, radius * 0.7, radius * 0.32, 0x89906b, 0.22)
+        .setDepth(p.y + 1);
     });
-    this.add.circle(800, 500, 150, 0x9b8752, 0.05).setStrokeStyle(3, 0xc6b77e, 0.24);
-    this.add.circle(800, 500, 118, 0x000000, 0).setStrokeStyle(1, 0xc6b77e, 0.18);
+    const center = worldToScreen(800, 500);
+    this.add.ellipse(center.x, center.y, 225, 92, 0x9b8752, 0.06)
+      .setStrokeStyle(3, 0xc6b77e, 0.3).setDepth(center.y - 2);
+    this.add.ellipse(center.x, center.y, 177, 72, 0x000000, 0)
+      .setStrokeStyle(1, 0xc6b77e, 0.2).setDepth(center.y - 1);
   }
 
   createHero() {
@@ -113,14 +170,17 @@ export class ArenaScene extends Phaser.Scene {
     texture.generateTexture('warlock-hero', 40, 44);
     texture.destroy();
 
+    // Keep physics/network coordinates Cartesian; render the actor on the isometric plane.
     this.hero = this.physics.add.sprite(800, 500, 'warlock-hero');
     this.hero.setCircle(15, 5, 8);
     this.hero.setCollideWorldBounds(true);
-    this.hero.setDepth(10);
-    this.heroLabel = this.add.text(0, 0, 'Warlock', {
+    this.hero.setVisible(false);
+    const p = worldToScreen(this.hero.x, this.hero.y);
+    this.heroVisual = this.add.image(p.x, p.y, 'warlock-hero').setDepth(p.y + 10);
+    this.heroLabel = this.add.text(p.x, p.y - 36, 'Warlock', {
       fontFamily: 'Georgia, serif', fontSize: '12px', color: '#f1e6bd',
       stroke: '#172017', strokeThickness: 3
-    }).setOrigin(0.5, 1).setDepth(11);
+    }).setOrigin(0.5, 1).setDepth(p.y + 11);
   }
 
   createSkillBar() {
@@ -181,7 +241,7 @@ export class ArenaScene extends Phaser.Scene {
     if (!this.selectedAbility || this.aimPointerId !== null) return;
     if (pointer.wasTouch && pointer.x < this.scale.width * 0.46) return;
     this.aimPointerId = pointer.id;
-    this.aimTarget = { x: pointer.worldX, y: pointer.worldY };
+    this.aimTarget = screenToWorld(pointer.worldX, pointer.worldY);
     this.drawAim();
   }
 
@@ -197,7 +257,10 @@ export class ArenaScene extends Phaser.Scene {
         button.icon.setPosition(dx * scale, dy * scale);
         button.text.setPosition(dx * scale, dy * scale + 1);
       }
-      this.skillButtonAim = distance >= 10 ? Math.atan2(dy, dx) : null;
+      if (distance >= 10) {
+        const direction = screenVectorToWorld(dx, dy);
+        this.skillButtonAim = Math.atan2(direction.y, direction.x);
+      } else this.skillButtonAim = null;
       return;
     }
     if (pointer.id !== this.aimPointerId) return;
@@ -216,13 +279,14 @@ export class ArenaScene extends Phaser.Scene {
         button.icon.setPosition(button.baseIconX, button.baseIconY);
         button.text.setPosition(button.baseIconX, button.baseIconY + 1);
       }
-      const targetX = this.hero.x + Math.cos(angle) * FIREBALL.range.value;
-      const targetY = this.hero.y + Math.sin(angle) * FIREBALL.range.value;
+      const aim = screenVectorToWorld(Math.cos(angle), Math.sin(angle));
+      const targetX = this.hero.x + aim.x * FIREBALL.range.value;
+      const targetY = this.hero.y + aim.y * FIREBALL.range.value;
       this.castFireball(targetX, targetY);
       return;
     }
     if (pointer.id !== this.aimPointerId) return;
-    const target = { x: pointer.worldX, y: pointer.worldY };
+    const target = screenToWorld(pointer.worldX, pointer.worldY);
     const ability = this.selectedAbility;
     this.aimPointerId = null;
     this.aimTarget = null;
@@ -240,8 +304,9 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   createRemotePlayer(player) {
-    const sprite = this.add.image(player.x, player.y, 'warlock-hero').setTint(0xd58c70).setDepth(9);
-    const label = this.add.text(player.x, player.y - 34, 'Opponent', {
+    const p = worldToScreen(player.x, player.y);
+    const sprite = this.add.image(p.x, p.y, 'warlock-hero').setTint(0xd58c70).setDepth(p.y + 9);
+    const label = this.add.text(p.x, p.y - 34, 'Opponent', {
       fontFamily: 'Arial, sans-serif', fontSize: '11px', color: '#ffd1bd',
       stroke: '#172017', strokeThickness: 3
     }).setOrigin(0.5, 1).setDepth(11);
@@ -254,9 +319,13 @@ export class ArenaScene extends Phaser.Scene {
     for (const player of players) {
       if (player.id === this.network.playerId) {
         this.hero.setPosition(player.x, player.y);
+        const heroScreen = worldToScreen(player.x, player.y);
+        this.heroVisual?.setPosition(heroScreen.x, heroScreen.y).setDepth(heroScreen.y + 10);
+        this.heroLabel?.setPosition(heroScreen.x, heroScreen.y - 36).setDepth(heroScreen.y + 11);
         if (Number.isFinite(player.facingX) && Number.isFinite(player.facingY) &&
             (player.facingX || player.facingY)) {
           this.hero.rotation = Math.atan2(player.facingY, player.facingX) + Math.PI / 2;
+          this.heroVisual.rotation = projectedAngle(player.facingX, player.facingY) + Math.PI / 2;
         }
         this.currentHealth = player.health;
         this.maxHealth = player.maxHealth;
@@ -269,11 +338,12 @@ export class ArenaScene extends Phaser.Scene {
         view = this.createRemotePlayer(player);
         this.remotePlayers.set(player.id, view);
       }
-      view.sprite.setPosition(player.x, player.y);
+      const p = worldToScreen(player.x, player.y);
+      view.sprite.setPosition(p.x, p.y).setDepth(p.y + 9);
       if (player.facingX || player.facingY) {
-        view.sprite.rotation = Math.atan2(player.facingY, player.facingX) + Math.PI / 2;
+        view.sprite.rotation = projectedAngle(player.facingX, player.facingY) + Math.PI / 2;
       }
-      view.label.setPosition(player.x, player.y - 34);
+      view.label.setPosition(p.x, p.y - 34).setDepth(p.y + 11);
       view.health = player.health;
     }
     for (const [id, view] of this.remotePlayers) {
@@ -289,11 +359,13 @@ export class ArenaScene extends Phaser.Scene {
       seenProjectiles.add(projectile.id);
       let view = this.projectileViews.get(projectile.id);
       if (!view) {
-        view = this.add.circle(projectile.x, projectile.y, 8, 0xffa33a, 1)
-          .setStrokeStyle(2, 0xffe5a0, 0.9).setDepth(20);
+        const p = worldToScreen(projectile.x, projectile.y);
+        view = this.add.circle(p.x, p.y, 8, 0xffa33a, 1)
+          .setStrokeStyle(2, 0xffe5a0, 0.9).setDepth(p.y + 20);
         this.projectileViews.set(projectile.id, view);
       }
-      view.setPosition(projectile.x, projectile.y);
+      const p = worldToScreen(projectile.x, projectile.y);
+      view.setPosition(p.x, p.y).setDepth(p.y + 20);
     }
     for (const [id, view] of this.projectileViews) {
       if (!seenProjectiles.has(id)) {
@@ -312,14 +384,15 @@ export class ArenaScene extends Phaser.Scene {
     const direction = new Phaser.Math.Vector2(Math.cos(angle), Math.sin(angle));
     const startX = this.hero.x + direction.x * 26;
     const startY = this.hero.y + direction.y * 26;
-    const projectile = this.add.container(startX, startY).setDepth(30);
+    const start = worldToScreen(startX, startY);
+    const projectile = this.add.container(start.x, start.y).setDepth(start.y + 30);
     projectile.add([
       this.add.circle(0, 0, 15, 0xff6a1a, 0.22),
       this.add.circle(0, 0, 10, 0xff8b27, 0.95).setStrokeStyle(2, 0xffe7a0, 1),
       this.add.circle(-2, -2, 4, 0xfff3bd, 1)
     ]);
     this.localProjectiles.push({
-      view: projectile,
+      view: projectile, x: startX, y: startY,
       velocityX: direction.x * FIREBALL.projectileSpeed.value,
       velocityY: direction.y * FIREBALL.projectileSpeed.value,
       travelled: 0
@@ -332,8 +405,10 @@ export class ArenaScene extends Phaser.Scene {
       const projectile = this.localProjectiles[i];
       const stepX = projectile.velocityX * delta / 1000;
       const stepY = projectile.velocityY * delta / 1000;
-      projectile.view.x += stepX;
-      projectile.view.y += stepY;
+      projectile.x += stepX;
+      projectile.y += stepY;
+      const p = worldToScreen(projectile.x, projectile.y);
+      projectile.view.setPosition(p.x, p.y).setDepth(p.y + 30);
       projectile.travelled += Math.hypot(stepX, stepY);
       if (projectile.travelled >= maxRange) {
         projectile.view.destroy();
@@ -376,17 +451,19 @@ export class ArenaScene extends Phaser.Scene {
     const right = this.cursors.right.isDown || this.keys.D.isDown;
     const up = this.cursors.up.isDown || this.keys.W.isDown;
     const down = this.cursors.down.isDown || this.keys.S.isDown;
-    let x = Number(right) - Number(left);
-    let y = Number(down) - Number(up);
+    let screenX = Number(right) - Number(left);
+    let screenY = Number(down) - Number(up);
     if (this.touch.vector.lengthSq() > 0) {
-      x = this.touch.vector.x / 54;
-      y = this.touch.vector.y / 54;
+      screenX = this.touch.vector.x / 54;
+      screenY = this.touch.vector.y / 54;
     }
-    const direction = new Phaser.Math.Vector2(x, y);
+    const worldDirection = screenVectorToWorld(screenX, screenY);
+    const direction = new Phaser.Math.Vector2(worldDirection.x, worldDirection.y);
     if (direction.lengthSq() > 1) direction.normalize();
 
     if (direction.lengthSq() > 0.001) {
       this.hero.rotation = Math.atan2(direction.y, direction.x) + Math.PI / 2;
+      this.heroVisual.rotation = projectedAngle(direction.x, direction.y) + Math.PI / 2;
     }
     if (this.network.connected) {
       // Match the input send rate to the server's 20 Hz simulation, not render FPS.
@@ -400,7 +477,9 @@ export class ArenaScene extends Phaser.Scene {
     }
 
     if (Phaser.Input.Keyboard.JustDown(this.keys.SPACE)) this.toggleAbility('fireball');
-    this.heroLabel.setPosition(this.hero.x, this.hero.y - 34);
+    const heroScreen = worldToScreen(this.hero.x, this.hero.y);
+    this.heroVisual.setPosition(heroScreen.x, heroScreen.y).setDepth(heroScreen.y + 10);
+    this.heroLabel.setPosition(heroScreen.x, heroScreen.y - 36).setDepth(heroScreen.y + 11);
     this.touch.update();
   }
 }
