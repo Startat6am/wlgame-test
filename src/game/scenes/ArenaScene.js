@@ -112,12 +112,12 @@ export class ArenaScene extends Phaser.Scene {
       this.physics.add.existing(rock, true);
       this.obstacles.add(rock);
       rock.setVisible(false);
-      this.add.ellipse(p.x, p.y + radius * 0.16, radius * 1.65, radius * 0.78, 0x151d16, 0.48)
-        .setDepth(p.y - 1);
-      this.add.ellipse(p.x, p.y, radius * 1.45, radius * 0.72, 0x20291f, 1)
-        .setStrokeStyle(5, 0x657253, 0.95).setDepth(p.y);
+      this.add.ellipse(p.x, p.y + radius * 0.54, radius * 2.2, radius * 1.14, 0x151d16, 0.48)
+        .setDepth(p.y + radius * 0.54 - 1);
+      this.add.ellipse(p.x, p.y, radius * 2.12, radius * 1.08, 0x20291f, 1)
+        .setStrokeStyle(5, 0x657253, 0.95).setDepth(p.y + radius * 0.54);
       this.add.ellipse(p.x - radius * 0.16, p.y - radius * 0.12, radius * 0.7, radius * 0.32, 0x89906b, 0.22)
-        .setDepth(p.y + 1);
+        .setDepth(p.y + radius * 0.54 + 1);
     });
     const center = worldToScreen(800, 500);
     this.add.ellipse(center.x, center.y, 225, 92, 0x9b8752, 0.06)
@@ -145,8 +145,8 @@ export class ArenaScene extends Phaser.Scene {
     this.hero.setCollideWorldBounds(true);
     this.hero.setVisible(false);
     const p = worldToScreen(this.hero.x, this.hero.y);
-    this.heroVisual = this.add.image(p.x, p.y, 'warlock-hero').setDepth(p.y + 10);
-    this.heroLabel = this.add.text(p.x, p.y - 36, 'Warlock', {
+    this.heroVisual = this.add.image(p.x, p.y, 'warlock-hero').setOrigin(0.5, 1).setDepth(p.y + 1);
+    this.heroLabel = this.add.text(p.x, p.y - 46, 'Warlock', {
       fontFamily: 'Georgia, serif', fontSize: '12px', color: '#f1e6bd',
       stroke: '#172017', strokeThickness: 3
     }).setOrigin(0.5, 1).setDepth(p.y + 11);
@@ -284,8 +284,8 @@ export class ArenaScene extends Phaser.Scene {
 
   createRemotePlayer(player) {
     const p = worldToScreen(player.x, player.y);
-    const sprite = this.add.image(p.x, p.y, 'warlock-hero').setTint(0xd58c70).setDepth(p.y + 9);
-    const label = this.add.text(p.x, p.y - 34, 'Opponent', {
+    const sprite = this.add.image(p.x, p.y, 'warlock-hero').setOrigin(0.5, 1).setTint(0xd58c70).setDepth(p.y + 1);
+    const label = this.add.text(p.x, p.y - 42, 'Opponent', {
       fontFamily: 'Arial, sans-serif', fontSize: '11px', color: '#ffd1bd',
       stroke: '#172017', strokeThickness: 3
     }).setOrigin(0.5, 1).setDepth(11);
@@ -299,8 +299,8 @@ export class ArenaScene extends Phaser.Scene {
       if (player.id === this.network.playerId) {
         this.hero.setPosition(player.x, player.y);
         const heroScreen = worldToScreen(player.x, player.y);
-        this.heroVisual?.setPosition(heroScreen.x, heroScreen.y).setDepth(heroScreen.y + 10);
-        this.heroLabel?.setPosition(heroScreen.x, heroScreen.y - 36).setDepth(heroScreen.y + 11);
+        this.heroVisual?.setPosition(heroScreen.x, heroScreen.y).setDepth(heroScreen.y + 1);
+        this.heroLabel?.setPosition(heroScreen.x, heroScreen.y - 46).setDepth(heroScreen.y + 2);
         if (Number.isFinite(player.facingX) && Number.isFinite(player.facingY) &&
             (player.facingX || player.facingY)) {
           this.hero.rotation = Math.atan2(player.facingY, player.facingX) + Math.PI / 2;
@@ -318,11 +318,11 @@ export class ArenaScene extends Phaser.Scene {
         this.remotePlayers.set(player.id, view);
       }
       const p = worldToScreen(player.x, player.y);
-      view.sprite.setPosition(p.x, p.y).setDepth(p.y + 9);
+      view.sprite.setPosition(p.x, p.y).setDepth(p.y + 1);
       if (player.facingX || player.facingY) {
         view.sprite.rotation = projectedAngle(player.facingX, player.facingY) + Math.PI / 2;
       }
-      view.label.setPosition(p.x, p.y - 34).setDepth(p.y + 11);
+      view.label.setPosition(p.x, p.y - 42).setDepth(p.y + 2);
       view.health = player.health;
     }
     for (const [id, view] of this.remotePlayers) {
@@ -457,8 +457,8 @@ export class ArenaScene extends Phaser.Scene {
 
     if (Phaser.Input.Keyboard.JustDown(this.keys.SPACE)) this.toggleAbility('fireball');
     const heroScreen = worldToScreen(this.hero.x, this.hero.y);
-    this.heroVisual.setPosition(heroScreen.x, heroScreen.y).setDepth(heroScreen.y + 10);
-    this.heroLabel.setPosition(heroScreen.x, heroScreen.y - 36).setDepth(heroScreen.y + 11);
+    this.heroVisual.setPosition(heroScreen.x, heroScreen.y).setDepth(heroScreen.y + 1);
+    this.heroLabel.setPosition(heroScreen.x, heroScreen.y - 46).setDepth(heroScreen.y + 2);
     this.touch.update();
   }
 }
