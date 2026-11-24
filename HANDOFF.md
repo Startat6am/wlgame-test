@@ -6,7 +6,7 @@
 - **Branch:** `main`
 - **Checkpoint date:** 2026-11-24
 - **Current isometric work branch:** `feature/isometric-arena`.
-- **Latest isometric implementation commit:** `ed215b9f0b8215980842589c55c16817cc8134ad` (also includes authoritative facing vectors in snapshots).
+- **Latest isometric implementation commit:** `8edf7edc6c25212d7ed8e9fb53e90810ade24fe2` (pointer/FIRE coordinate fixes and actor-foot/depth alignment).
 - **Base commit:** `b30dccee049e99af70a9563deccb2f97676183b3`.
 - **Previous verified code checkpoint:** `32b211a156441d19f0377cc9274261460813dc15` — CI passed on run #25.
 - **Current code commit CI:** pending at the time this handoff was last updated; verify the run for the exact HEAD SHA.
@@ -94,8 +94,10 @@ Do not reconstruct work from chat memory until the repository and branch have be
 - `ArenaScene.js` renders the arena as a diamond with diagonal grid lines, projected obstacles, actors, aim marker, and projectiles.
 - Keyboard/touch screen directions and FIRE drag aim are converted back to simulation directions; a stationary FIRE tap preserves the hero's world-facing direction.
 - PR: https://github.com/Startat6am/wlgame-test/pull/1 (draft).
-- Latest observed commit status: Vercel check pending. Vercel deployment inspection returned 403 Forbidden; no deployment status is claimed.
-- Not yet verified: Vite production build, CI, browser rendering, collision alignment, camera behavior on phone aspect ratios, and live network aim direction. Do not merge or describe this as production-ready until those checks pass.
+- Latest observed Vercel status: failed with `build-rate-limit` (project/team limit; not an application build failure). Vercel deployment inspection returned 403 Forbidden; no deployment status is claimed.
+- GitHub Actions CI run #34 passed build/tests/server syntax on earlier checkpoint `f714c8e`; newer pointer/render alignment commits have not yet received a reported Actions run.
+- Recent code review fixes: pointer targeting now uses camera-adjusted world coordinates; FIRE drag stores the already-converted world direction (no second transform); obstacle footprints are scaled to match their circular physics bodies; actor sprites use bottom-origin positioning for foot/depth alignment.
+- Not yet verified on latest HEAD: Vite production build, CI, browser rendering, collision alignment, camera behavior on phone aspect ratios, and live network aim direction. Do not merge or describe this as production-ready until those checks pass.
 
 ## 8. Next actions (priority order)
 
