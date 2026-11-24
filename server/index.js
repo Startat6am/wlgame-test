@@ -13,7 +13,7 @@ const server = new WebSocketServer({ port: PORT });
 function sendSnapshot() {
   const payload = JSON.stringify({
     type: 'snapshot',
-    players: [...players.values()].map(({ id, x, y, health, maxHealth, damagePoints }) => ({
+    players: [...players.values()].map(({ id, x, y, health, maxHealth, damagePoints, facingX, facingY }) => ({
       id, x, y, health, maxHealth, damagePoints
     })),
     projectiles: [...projectiles.values()].map(({ id, x, y }) => ({ id, x, y }))
@@ -34,6 +34,7 @@ server.on('connection', (socket) => {
     x: 800 + (Math.random() - 0.5) * 260,
     y: 500 + (Math.random() - 0.5) * 180,
     inputX: 0, inputY: 0,
+    facingX: 0, facingY: -1,
     vx: 0, vy: 0,
     health: 100, maxHealth: 100, damagePoints: 0,
     lastFireballAt: -Infinity
@@ -52,6 +53,10 @@ server.on('connection', (socket) => {
       if (!Number.isFinite(x) || !Number.isFinite(y)) return;
       player.inputX = Math.max(-1, Math.min(1, x));
       player.inputY = Math.max(-1, Math.min(1, y));
+      if (Math.hypot(player.inputX, player.inputY) > 0.001) {
+        player.facingX = player.inputX;
+        player.facingY = player.inputY;
+      }
       const length = Math.hypot(player.inputX, player.inputY);
       if (length > 1) { player.inputX /= length; player.inputY /= length; }
       return;
