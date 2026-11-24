@@ -5,7 +5,9 @@
 - **Repository:** https://github.com/Startat6am/wlgame-test
 - **Branch:** `main`
 - **Checkpoint date:** 2026-11-24
-- **Latest application-code commit:** update after the FIRE aim-stick change; verify current `main` HEAD.
+- **Current isometric work branch:** `feature/isometric-arena`.
+- **Latest isometric implementation commit:** `1e5697993305e15c4136136fab4753b174e14516` (test script includes projection tests).
+- **Base commit:** `b30dccee049e99af70a9563deccb2f97676183b3`.
 - **Previous verified code checkpoint:** `32b211a156441d19f0377cc9274261460813dc15` — CI passed on run #25.
 - **Current code commit CI:** pending at the time this handoff was last updated; verify the run for the exact HEAD SHA.
 - **Handoff file was introduced in:** `be8deb33b3f3d10df5a67218e368213492f524bb`.
@@ -20,6 +22,8 @@
 4. `docs/PERFORMANCE.md` documents the performance audit, implemented changes, measurement strategy, and backlog.
 5. `ROADMAP.md` records project phases and acceptance criteria.
 6. FIRE is an aim-stick action: press and drag on the button to choose a direction, then release to cast. A stationary tap fires in the hero's current facing direction. Keyboard aiming remains available with Space followed by a target click.
+
+7. Isometric prototype work is in `feature/isometric-arena`: diamond arena rendering, projected obstacles/actors/projectiles, and screen/world coordinate conversion for movement and aiming. This branch is not merged or deployed; browser testing and CI verification are still required.
 
 This is a verified source checkpoint, not a claim that the game is complete or all these changes are deployed.
 
@@ -82,7 +86,15 @@ Start a new session with:
 
 Do not reconstruct work from chat memory until the repository and branch have been checked.
 
-## 7. Next actions (priority order)
+## 7. Current isometric branch checkpoint
+
+- The simulation and WebSocket server continue to use the existing Cartesian world coordinates.
+- `src/game/geometry/isometric.js` owns world/screen projection and inverse transforms; tests live beside it.
+- `ArenaScene.js` renders the arena as a diamond with diagonal grid lines, projected obstacles, actors, aim marker, and projectiles.
+- Keyboard/touch screen directions and FIRE drag aim are converted back to simulation directions; a stationary FIRE tap preserves the hero's world-facing direction.
+- Not yet verified: Vite production build, CI, browser rendering, collision alignment, camera behavior on phone aspect ratios, and live network aim direction. Do not merge or describe this as production-ready until those checks pass.
+
+## 8. Next actions (priority order)
 
 1. Confirm the latest Vercel production deployment completes, then compare its deployed SHA with current `main`.
 2. Add a lightweight frame-time monitor (rolling samples, p95/p99, max frame time) and capture real desktop/mobile baselines.
