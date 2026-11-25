@@ -28,7 +28,7 @@ This roadmap prioritizes a stable playable core first, then expands gameplay and
 - [x] Initial 2D isometric projection layer on `feature/isometric-arena`.
 - [x] Preview deployment for the isometric branch on the new Vercel team.
 
-**Verification snapshot (2026-11-25):** GitHub Actions run #40 passed on application commit `eea4e3478195737225c13f69bb59a3c87897f3f2` (Vite build, `npm test`, and `node --check server/index.js`). The new Vercel project `wlgame-test` deployed that same branch/commit to Preview and reported READY. This verifies build/deployment only; manual browser gameplay checks have not yet been completed. An unrelated failed Vercel status from the former team still appears on GitHub and refers to its old daily build limit; the new team's Vercel check is successful.
+**Verification snapshot (2026-11-25):** GitHub Actions run #45 (run ID `45676652010`) passed on application commit `5dba11606ddd14f14d874321e86380969d6c2748`: dependency install, Vite build, `npm test`, and `node --check server/index.js`. Documentation checkpoint run #47 (run ID `45676851907`) also passed on `760a936d73616f8d3d8ae3b84de123a842480250`. Vercel Preview deployment `dpl_Bn7HJ9rs7hPsVyNrb7SJAYn7eEmQ` for branch `feature/isometric-arena`, commit `760a936d73616f8d3d8ae3b84de123a842480250`, reported READY. This verifies build/deployment only; manual browser gameplay checks have not yet been completed. The old team's Vercel build-rate-limit failure is separate from the new team's successful project deployment.
 
 ## Roadmap
 
