@@ -1,4 +1,4 @@
-import { applyDamage, calculateKnockback } from './combat-math.js';
+import { applyDamage, calculateKnockback, resolveCircleCollision } from './combat-math.js';
 
 export const TRAINING_TARGET = Object.freeze({
   x: 800,
@@ -51,7 +51,7 @@ export function hitTrainingTarget(target, damage, directionX, directionY, nowMs)
   };
 }
 
-export function updateTrainingTarget(target, deltaMs, nowMs, world) {
+export function updateTrainingTarget(target, deltaMs, nowMs, world, obstacles = []) {
   if (!Number.isFinite(deltaMs) || deltaMs < 0 || !Number.isFinite(nowMs)) {
     throw new TypeError('deltaMs and nowMs must be finite and non-negative');
   }
@@ -62,11 +62,14 @@ export function updateTrainingTarget(target, deltaMs, nowMs, world) {
 
   const dt = Math.min(deltaMs, 100) / 1000;
   const damping = Math.pow(0.12, dt);
-  return {
-    ...target,
-    x: Math.max(target.radius, Math.min(world.width - target.radius, target.x + target.vx * dt)),
-    y: Math.max(target.radius, Math.min(world.height - target.radius, target.y + target.vy * dt)),
-    vx: target.vx * damping,
-    vy: target.vy * damping
-  };
+  let x = Math.max(target.radius, Math.min(world.width - target.radius, target.x + target.vx * dt));
+  let y = Math.max(target.radius, Math.min(world.height - target.radius, target.y + target.vy * dt));
+  for (let pass = 0; pass < 2; pass += 1) {
+    for (const obstacle of obstacles) {
+      const resolved = resolveCircleCollision(x, y, target.radius, obstacle.x, obstacle.y, obstacle.radius);
+      x = resolved.x;
+      y = resolved.y;
+    }
+  }
+  return { ...target, x, y, vx: target.vx * damping, vy: target.vy * damping };
 }
