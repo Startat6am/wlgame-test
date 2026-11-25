@@ -7,7 +7,7 @@ const PORT = Number(process.env.PORT ?? 2567);
 const TICK_RATE = 20;
 const WORLD = { width: 1600, height: 1000 };
 const SPEED = 230;
-const FIREBALL = { damage: 8, cooldownMs: 1400, speed: 520, radius: 9, maxDistance: 520, baseKnockback: 260 };
+const FIREBALL = { damage: 8, cooldownMs: 1400, speed: 520, radius: 9, maxDistance: 520, baseKnockback: 130 };
 const PLAYER_RADIUS = 15;
 const OBSTACLES = ARENA_OBSTACLES.map(({ x, y, radius }) => [x, y, radius]);
 const players = new Map();
