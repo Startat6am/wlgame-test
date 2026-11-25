@@ -85,7 +85,7 @@ Current package scripts:
 ## 5. Known gaps — do not mark complete
 
 1. **Manual browser QA is still pending:** isometric rendering, camera bounds/scroll, collision alignment, desktop and phone layouts, actor depth, FIRE tap/drag, keyboard aim, touch movement, local and network modes. User reports no major visible complaints so far; this is useful feedback but not a substitute for browser/device verification.
-2. **Offline Fireball combat lifecycle is incomplete:** obstacle collision is implemented, but offline mode has no opponent/combatant target, so local damage, knockback, death, and respawn are not yet wired.
+2. **Offline training-target lifecycle is implemented but needs manual playtesting:** local Fireball swept hits apply damage and directional knockback; lethal damage marks the target dead and schedules a 1.8-second respawn. The target is a stationary training dummy (not an AI opponent). Five automated tests cover the pure state lifecycle. Verify visuals, timing, obstacle/boundary interaction, and controls in a browser.
 3. **Online obstacle collision needs gameplay verification:** authoritative player movement and Fireballs now use the same circular obstacle geometry as the offline scene; confirm sliding, edge behavior, and projectile impacts in a live multi-client session.
 4. **Persistent WebSocket hosting is incomplete:** client endpoint configuration is implemented, but no persistent Node WebSocket host has been provisioned and `VITE_WS_SERVER_URL` is not set in Vercel. Vercel hosts the frontend; it does not host the persistent Node WebSocket server.
 5. No repeatable desktop/phone frame-time or memory baseline has been captured. Do not claim performance improvements without same-device before/after measurements.
@@ -117,7 +117,7 @@ Do not reconstruct work from chat history until the repository and branch have b
 1. Browser QA on the Preview: arena bounds, camera follow/scroll, obstacle footprint vs physics, actor depth, desktop and mobile aspect ratios.
 2. Test FIRE: drag aim, stationary tap forward, release outside button, cooldown, obstacle impacts; test keyboard aim and touch joystick in offline and connected modes.
 3. Verify authoritative obstacle collision with two clients: player sliding around rocks and Fireballs stopping at rocks.
-4. Decide/add an offline opponent or training target model before wiring offline damage, knockback, death, and respawn.
+4. Manually playtest offline training-target hits, HP label, knockback, death, and 1.8-second respawn; adjust prototype feel only after testing.
 5. Choose persistent WebSocket hosting, set `VITE_WS_SERVER_URL` in Vercel, and test multi-client sessions.
 6. Capture desktop and representative-phone frame-time/memory baselines before further performance tuning.
 
@@ -135,3 +135,15 @@ Do not reconstruct work from chat history until the repository and branch have b
 - Preview deployment associated with this HEAD: `dpl_2RRZfPEWt9YrA5XLPTgeLCvREPXy`, state READY, URL https://wlgame-test-8ew0hdaou-callback5.vercel.app.
 - Working copy used for verification was clean except for a locally generated untracked `package-lock.json` (the repository does not currently track a lockfile); no source changes were made.
 - Next actions: obtain authenticated Preview access or another accessible test URL; perform manual movement/camera/obstacle/FIRE/desktop-mobile checks; then implement the offline opponent/target lifecycle. Keep PR #1 Draft and do not merge before manual QA.
+
+
+## Session continuation — 2026-11-26 (offline combat milestone)
+
+- **Branch HEAD:** `9f6d393b9f9edde5a53fa2250b9b926af5734ab6`.
+- **New implementation:** `src/game/combat/offline-combat.js` provides a testable training-target state lifecycle: damage, damage points, directional knockback, death, and timed respawn.
+- **Scene integration:** `ArenaScene.js` creates and renders the offline training target, updates its knockback/respawn state, and detects swept Fireball-vs-target collisions. Fireballs still terminate on obstacles and arena bounds. The training target is hidden when the WebSocket client reports a live server connection.
+- **Tests:** `src/game/combat/offline-combat.test.js` adds five tests for spawn, damage/knockback, lethal damage, dead-state hit rejection, timed respawn, and boundary clamping. Existing test glob `src/game/combat/*.test.js` includes them.
+- **CI:** WLGame CI run #65 (ID `45709311195`) SUCCESS on this exact HEAD: https://github.com/Startat6am/wlgame-test/actions/runs/45709311195
+- **Vercel Preview:** deployment `dpl_Fp4D524YZHW5RRSz9Ch1PQ8zsAf3`, READY, commit `9f6d393b9f9edde5a53fa2250b9b926af5734ab6`; URL https://wlgame-test-7h39h0m8e-callback5.vercel.app
+- **Manual QA remains incomplete:** earlier Preview access redirected to Vercel SSO. The new READY deployment confirms build/deploy only, not gameplay. Re-test through authenticated access or an intentionally public preview.
+- **Next:** manual offline combat and isometric control verification; fix any observed issues. Then proceed with persistent WebSocket hosting and two-client gameplay. PR #1 remains Draft; do not merge before browser QA.
