@@ -258,7 +258,9 @@ export class ArenaScene extends Phaser.Scene {
       button.text.setPosition(dx * scale, dy * scale + 1);
     }
 
-    if (distance >= 10) {
+    // Recalculate aim for every non-zero pointer offset. Do not clamp it
+    // against arena bounds or obstacles: aiming through blocked space is valid.
+    if (distance > 0.001) {
       const direction = screenVectorToWorld(dx, dy);
       const length = Math.hypot(direction.x, direction.y) || 1;
       this.skillButtonAim = { x: direction.x / length, y: direction.y / length };
@@ -510,6 +512,13 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   update(_time, delta) {
+    // Poll the active FIRE pointer every render frame. Pointer events remain a
+    // low-latency fast path, but the guide never waits for network snapshots/ticks.
+    if (this.skillButtonPointerId !== null) {
+      const pointer = this.input.pointers.find((candidate) => candidate.id === this.skillButtonPointerId);
+      if (pointer && this.skillButtonOrigin) this.updateSkillButtonAim(pointer);
+    }
+
     if (this.trainingTarget && !this.network.connected) {
       this.trainingTarget = updateTrainingTarget(this.trainingTarget, delta, this.time.now, WORLD, this.obstacleCircles);
       this.updateTrainingTargetView();
