@@ -4,6 +4,7 @@ import { TouchControls } from '../input/TouchControls.js';
 import { NetworkClient } from '../../net/NetworkClient.js';
 import { WORLD, ISO_VIEW, worldToScreen, screenToWorld, screenVectorToWorld, projectedAngle } from '../geometry/isometric.js';
 import { segmentIntersectsCircle } from '../combat/combat-math.js';
+import { ARENA_OBSTACLES } from '../data/arena.js';
 
 const SPEED = balance.baseline.movementSpeed.value;
 const FIREBALL = balance.abilities.find((ability) => ability.id === 'fireball');
@@ -102,11 +103,7 @@ export class ArenaScene extends Phaser.Scene {
     g.strokePoints(corners.map((p) => new Phaser.Math.Vector2(p.x, p.y)), true);
 
     this.obstacles = this.physics.add.staticGroup();
-    const rocks = [
-      [390, 310, 76], [600, 220, 54], [850, 360, 90],
-      [1160, 250, 68], [1280, 650, 82], [930, 770, 58],
-      [480, 720, 88], [250, 560, 48], [710, 590, 42]
-    ];
+    const rocks = ARENA_OBSTACLES.map(({ x, y, radius }) => [x, y, radius]);
     this.obstacleCircles = rocks.map(([x, y, radius]) => ({ x, y, radius }));
     rocks.forEach(([x, y, radius]) => {
       const p = worldToScreen(x, y);
