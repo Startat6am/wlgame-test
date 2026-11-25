@@ -52,3 +52,11 @@ test('target knockback decays and remains inside world bounds', () => {
   assert.equal(moved.x, 1600 - target.radius);
   assert.ok(moved.vx < target.vx);
 });
+
+
+test('target knockback resolves against static arena obstacles', () => {
+  const target = { ...createTrainingTarget(), x: 100, y: 100, vx: -500, vy: 0 };
+  const obstacles = [{ x: 70, y: 100, radius: 20 }];
+  const moved = updateTrainingTarget(target, 100, 100, world, obstacles);
+  assert.ok(Math.hypot(moved.x - 70, moved.y - 100) >= target.radius + 20 - 1e-9);
+});
