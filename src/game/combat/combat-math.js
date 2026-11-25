@@ -73,3 +73,31 @@ export function segmentIntersectsCircle(startX, startY, endX, endY, centerX, cen
   const offsetY = centerY - closestY;
   return offsetX * offsetX + offsetY * offsetY <= radius * radius;
 }
+
+
+export function resolveCircleCollision(x, y, movingRadius, centerX, centerY, obstacleRadius) {
+  for (const [value, name] of [
+    [x, 'x'], [y, 'y'], [centerX, 'centerX'], [centerY, 'centerY']
+  ]) {
+    if (!Number.isFinite(value)) throw new TypeError(`${name} must be a finite number`);
+  }
+  nonNegativeFinite(movingRadius, 'movingRadius');
+  nonNegativeFinite(obstacleRadius, 'obstacleRadius');
+
+  const dx = x - centerX;
+  const dy = y - centerY;
+  const minimumDistance = movingRadius + obstacleRadius;
+  const distanceSquared = dx * dx + dy * dy;
+  if (distanceSquared >= minimumDistance * minimumDistance) {
+    return { x, y, collided: false };
+  }
+
+  const distance = Math.sqrt(distanceSquared);
+  const normalX = distance > 0 ? dx / distance : 1;
+  const normalY = distance > 0 ? dy / distance : 0;
+  return {
+    x: centerX + normalX * minimumDistance,
+    y: centerY + normalY * minimumDistance,
+    collided: true
+  };
+}
