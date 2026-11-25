@@ -124,3 +124,14 @@ Do not reconstruct work from chat history until the repository and branch have b
 ---
 
 **Maintenance rule:** update this file only with verified repository, CI, and deployment evidence. A requested action, code draft, or deployment in progress is not a completed task.
+
+
+## Session continuation — 2026-11-25
+
+- Verified remote branch HEAD: `d922b04df6ed19095dbed9f8a228353677d06cd6`.
+- Latest GitHub Actions: WLGame CI run #62, ID `45683692800`, SUCCESS on this HEAD. Vercel status check for the deployment is SUCCESS.
+- Fresh isolated environment: `npm install` succeeded; `npm test` passed 22/22; `npm run build` succeeded; `node --check server/index.js` succeeded. Build emits a non-fatal chunk-size warning (main JS ~1.5 MB uncompressed, ~347 KB gzip).
+- Browser smoke: local Vite page loaded (“WLGame — Warlock Arena”). Attempt to open Preview URL redirected to Vercel login/SSO, blocking gameplay verification on the deployed build. Do not mark manual QA complete.
+- Preview deployment associated with this HEAD: `dpl_2RRZfPEWt9YrA5XLPTgeLCvREPXy`, state READY, URL https://wlgame-test-8ew0hdaou-callback5.vercel.app.
+- Working copy used for verification was clean except for a locally generated untracked `package-lock.json` (the repository does not currently track a lockfile); no source changes were made.
+- Next actions: obtain authenticated Preview access or another accessible test URL; perform manual movement/camera/obstacle/FIRE/desktop-mobile checks; then implement the offline opponent/target lifecycle. Keep PR #1 Draft and do not merge before manual QA.
