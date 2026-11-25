@@ -34,6 +34,8 @@ npm run server
 
 The client connects to `ws://localhost:2567` when available. Without it, the prototype runs in local mode.
 
+For a deployed client, set `VITE_WS_SERVER_URL` to the persistent WebSocket server URL (for example, `wss://your-host.example`) in the deployment environment. If unset, the client falls back to the current hostname on port `2567`. See `.env.example`.
+
 ## Controls
 
 - Desktop: WASD or arrow keys.
