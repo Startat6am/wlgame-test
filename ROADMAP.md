@@ -146,4 +146,4 @@ A phase is complete only when:
 - [x] Render target health/respawn state in the isometric scene; hide the training target when the WebSocket client connects.
 - [x] Add five unit tests covering spawn, damage/knockback, lethal damage, dead-state hit rejection, respawn, and world-bound clamping.
 - [ ] Manually verify gameplay feel and interaction in an accessible browser; Vercel Preview may be protected by SSO.
-- Verification: CI run #65, commit `9f6d393b9f9edde5a53fa2250b9b926af5734ab6`, SUCCESS. Vercel Preview deployment `dpl_Fp4D524YZHW5RRSz9Ch1PQ8zsAf3`, READY.
+- Verification: CI run #69, commit `f284a66d446b6fb9026eabdcbe5acf6efe872fe5`, SUCCESS. Vercel Preview deployment `dpl_FxwnuJ3EdhD3v8khXsFgmvPjiZ5a`, READY.
