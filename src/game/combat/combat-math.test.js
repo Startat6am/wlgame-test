@@ -4,7 +4,8 @@ import {
   applyDamage,
   calculateKnockback,
   calculateLavaDamage,
-  isCooldownReady
+  isCooldownReady,
+  segmentIntersectsCircle
 } from './combat-math.js';
 
 test('damage reduces health and accumulates damage points', () => {
@@ -52,4 +53,22 @@ test('cooldown becomes ready at its exact boundary', () => {
 test('invalid negative values are rejected', () => {
   assert.throws(() => calculateKnockback({ baseKnockback: -1 }), TypeError);
   assert.throws(() => calculateLavaDamage(9, -1), TypeError);
+});
+
+
+test('swept projectile segment detects a circle hit without tunneling', () => {
+  assert.equal(segmentIntersectsCircle(0, 0, 100, 0, 50, 0, 8), true);
+  assert.equal(segmentIntersectsCircle(0, 0, 100, 0, 50, 8, 8), true);
+  assert.equal(segmentIntersectsCircle(0, 0, 100, 0, 50, 8.01, 8), false);
+});
+
+test('segment-circle collision handles endpoints and zero-length movement', () => {
+  assert.equal(segmentIntersectsCircle(0, 0, 10, 0, 0, 0, 1), true);
+  assert.equal(segmentIntersectsCircle(5, 5, 5, 5, 5, 5, 0), true);
+  assert.equal(segmentIntersectsCircle(5, 5, 5, 5, 7, 5, 1), false);
+});
+
+test('segment-circle collision rejects invalid inputs', () => {
+  assert.throws(() => segmentIntersectsCircle(0, 0, Infinity, 0, 0, 0, 1), TypeError);
+  assert.throws(() => segmentIntersectsCircle(0, 0, 1, 0, 0, 0, -1), TypeError);
 });
