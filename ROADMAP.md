@@ -22,11 +22,13 @@ This roadmap prioritizes a stable playable core first, then expands gameplay and
 - [x] Initial combat math module and tests.
 - [x] Initial WebSocket server and client.
 - [x] Initial authoritative movement/projectile/hit processing.
-- [x] CI workflow for existing Node tests.
+- [x] CI workflow for build, tests, and server syntax validation.
 - [x] Performance: redraw touch joystick only when dirty.
 - [x] Performance: throttle movement input to 20 Hz to match current server tick.
+- [x] Initial 2D isometric projection layer on `feature/isometric-arena`.
+- [x] Preview deployment for the isometric branch on the new Vercel team.
 
-Status note: the latest offline Fireball/FPS change was committed as `d4db82e` in the prior project history, but production deployment was previously blocked by Vercel's daily deployment API limit. Verify the live deployment before treating that change as released.
+**Verification snapshot (2026-11-25):** GitHub Actions run #40 passed on application commit `eea4e3478195737225c13f69bb59a3c87897f3f2` (Vite build, `npm test`, and `node --check server/index.js`). The new Vercel project `wlgame-test` deployed that same branch/commit to Preview and reported READY. This verifies build/deployment only; manual browser gameplay checks have not yet been completed. An unrelated failed Vercel status from the former team still appears on GitHub and refers to its old daily build limit; the new team's Vercel check is successful.
 
 ## Roadmap
 
@@ -40,7 +42,7 @@ Status note: the latest offline Fireball/FPS change was committed as `d4db82e` i
 - [ ] Fix any measured performance regressions before expanding content.
 
 ### P1 — Core arena and simulation
-- [ ] Complete arena boundaries and obstacle collision rules.
+- [ ] Complete arena boundaries and obstacle collision rules in both offline and authoritative online simulation.
 - [ ] Implement lava zones and damage/death flow.
 - [ ] Separate simulation from presentation where required.
 - [ ] Add projectile/effect pooling if profiling demonstrates allocation pressure.
@@ -92,9 +94,12 @@ Status note: the latest offline Fireball/FPS change was committed as `d4db82e` i
 - [x] Add a 2D isometric projection layer while preserving server simulation coordinates.
 - [x] Render diamond arena, diagonal tile grid, and projected obstacles.
 - [x] Project local/remote players and projectiles; convert movement and targeting directions.
+- [x] Add projection round-trip and direction tests.
+- [x] Pass CI build, tests, and server syntax check on the current application checkpoint.
+- [x] Publish the isometric branch to a READY Vercel Preview deployment.
 - [ ] Verify collision alignment, camera bounds, and desktop/mobile layouts in a browser.
 - [ ] Verify FIRE tap/drag and keyboard/touch movement in local and network modes.
-- [ ] Pass CI/build and merge only after visual regression checks.
+- [ ] Complete visual regression review and merge only after manual checks pass.
 
 ## Definition of done for each phase
 
@@ -108,8 +113,9 @@ A phase is complete only when:
 
 ## Current next actions
 
-1. Capture baseline FPS/frame-time and memory on one desktop and at least one representative phone.
-2. Validate the two low-risk performance changes already applied.
-3. Finish local Fireball collision and damage loop.
-4. Add a repeatable projectile stress test.
-5. Decide on persistent WebSocket hosting and configure the server URL.
+1. Perform browser QA on the isometric Preview: arena bounds, camera follow/scroll, obstacle collision footprint, actor depth, desktop and phone aspect ratios.
+2. Verify FIRE tap/drag, keyboard aim, and touch joystick in offline and connected modes.
+3. Fix issues found by those checks before merging P6a.
+4. Continue P0: add local projectile collision/damage lifecycle with automated tests; preserve the distinction between offline visual-only fireball and authoritative online combat until implemented.
+5. Make online obstacle collision match the offline arena geometry.
+6. Configure persistent WebSocket hosting and an explicit client server URL before claiming online multiplayer is available outside local development.
