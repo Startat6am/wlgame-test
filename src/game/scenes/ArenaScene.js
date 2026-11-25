@@ -234,6 +234,8 @@ export class ArenaScene extends Phaser.Scene {
       this.skillButtonPointerId = pointer.id;
       this.skillButtonOrigin = { x: pointer.x, y: pointer.y };
       this.skillButtonAim = null;
+      const facingAngle = this.hero.rotation - Math.PI / 2;
+      this.drawFireballGuide({ x: Math.cos(facingAngle), y: Math.sin(facingAngle) });
       return;
     }
     if (!this.selectedAbility || this.aimPointerId !== null) return;
@@ -260,6 +262,8 @@ export class ArenaScene extends Phaser.Scene {
         const length = Math.hypot(direction.x, direction.y) || 1;
         this.skillButtonAim = { x: direction.x / length, y: direction.y / length };
       } else this.skillButtonAim = null;
+      const facingAngle = this.hero.rotation - Math.PI / 2;
+      this.drawFireballGuide(this.skillButtonAim ?? { x: Math.cos(facingAngle), y: Math.sin(facingAngle) });
       return;
     }
     if (pointer.id !== this.aimPointerId) return;
@@ -274,6 +278,7 @@ export class ArenaScene extends Phaser.Scene {
       this.skillButtonPointerId = null;
       this.skillButtonOrigin = null;
       this.skillButtonAim = null;
+      this.aimGraphics.clear();
       const button = this.skillButtons.get('fireball');
       if (button) {
         button.icon.setPosition(button.baseIconX, button.baseIconY);
@@ -293,6 +298,23 @@ export class ArenaScene extends Phaser.Scene {
     this.aimTarget = null;
     this.aimGraphics.clear();
     if (ability === 'fireball') this.castFireball(target.x, target.y);
+  }
+
+  drawFireballGuide(direction) {
+    this.aimGraphics.clear();
+    const origin = worldToScreen(this.hero.x, this.hero.y);
+    const projected = worldToScreen(this.hero.x + direction.x, this.hero.y + direction.y);
+    const dx = projected.x - origin.x;
+    const dy = projected.y - origin.y;
+    const length = Math.hypot(dx, dy) || 1;
+    const endX = origin.x + dx / length * 100;
+    const endY = origin.y + dy / length * 100;
+    this.aimGraphics.lineStyle(4, 0xffd28a, 0.28);
+    this.aimGraphics.lineBetween(origin.x, origin.y, endX, endY);
+    this.aimGraphics.lineStyle(1.5, 0xffedc2, 0.48);
+    this.aimGraphics.lineBetween(origin.x, origin.y, endX, endY);
+    this.aimGraphics.fillStyle(0xffedc2, 0.38);
+    this.aimGraphics.fillCircle(endX, endY, 4);
   }
 
   drawAim() {
