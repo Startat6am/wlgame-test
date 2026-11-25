@@ -8,9 +8,10 @@
 - **Active work branch:** `feature/isometric-arena`
 - **PR:** https://github.com/Startat6am/wlgame-test/pull/1 (open, draft; do not merge until manual browser QA is complete).
 - **Base branch:** `main`, base commit at PR creation: `b30dccee049e99af70a9563deccb2f97676183b3`.
-- **Latest application-code commit:** `5dba11606ddd14f14d874321e86380969d6c2748` — aligns authoritative player and Fireball obstacle collisions with the offline arena geometry.
-- **Latest roadmap refresh:** `e87185362d1b4cdd0c283d253bb2fafd9b732e11` — records the handoff workflow, obstacle-collision progress, and current verification snapshot.
-- **Previous handoff refresh:** `760a936d73616f8d3d8ae3b84de123a842480250`; this next commit is documentation-only.
+- **Latest functional code commit:** `66a69b3e2c82691786dabc275128f0e507103f63` — reads the explicit WebSocket endpoint from Vite environment configuration.
+- **Latest validation fix:** `85cc36387ba7b55b5deb69229b0cf39400aa01b5` — fixes the WebSocket URL test assertion; this is the tested application branch checkpoint.
+- **Latest roadmap refresh:** `c6a43865ad1114a25ad6c297d1c381f078f2b520` — records handoff workflow, collision progress, WebSocket endpoint configuration, and current verification.
+- **Previous handoff refresh:** `c14b8380d115f14594f06674da2e07d566ca5ab6`; this commit is documentation-only.
 - **Checkpoint date:** 2026-11-25.
 
 The source of truth is the current remote branch. Documentation-only commits can advance HEAD without changing the application-code checkpoint.
@@ -20,13 +21,11 @@ The source of truth is the current remote branch. Documentation-only commits can
 ### GitHub Actions
 
 - **Workflow:** WLGame CI
-- **Run:** #45, run ID `45676652010`
-- **Commit tested:** `5dba11606ddd14f14d874321e86380969d6c2748`
+- **Run:** #53, run ID `45677306557`
+- **Commit tested:** `85cc36387ba7b55b5deb69229b0cf39400aa01b5`
 - **Result:** SUCCESS.
-- Passed steps: dependency install, `npm run build`, `npm test`, and `node --check server/index.js`.
-- Run URL: https://github.com/Startat6am/wlgame-test/actions/runs/45676652010
-- **Documentation checkpoint:** run #47, run ID `45676851907`, SUCCESS on `760a936d73616f8d3d8ae3b84de123a842480250` (includes the handoff and roadmap updates; application code unchanged).
-- Run URL: https://github.com/Startat6am/wlgame-test/actions/runs/45676851907
+- Passed steps: dependency install, `npm run build`, `npm test` (combat, geometry, and network URL tests), and `node --check server/index.js`.
+- Run URL: https://github.com/Startat6am/wlgame-test/actions/runs/45677306557
 
 ### Vercel
 
@@ -35,12 +34,12 @@ The source of truth is the current remote branch. Documentation-only commits can
 - **Project ID:** `prj_278OZbqZFGgj3fYYfS8aF3laAbhx`
 - **Linked Git repository:** `Startat6am/wlgame-test`
 - **Preview branch:** `feature/isometric-arena`
-- **Preview commit:** `760a936d73616f8d3d8ae3b84de123a842480250`
-- **Preview deployment:** `dpl_Bn7HJ9rs7hPsVyNrb7SJAYn7eEmQ`
+- **Preview commit:** `85cc36387ba7b55b5deb69229b0cf39400aa01b5`
+- **Preview deployment:** `dpl_GYKmKeFPa11gnSKDGv7R5LEKm6DA`
 - **Preview state:** READY (verified 2026-11-25).
 - **Preview URL:** https://wlgame-test-git-feature-isometric-arena-callback5.vercel.app
-- **Immutable deployment URL:** https://wlgame-test-n27zgk1yr-callback5.vercel.app
-- **Inspector:** https://vercel.com/callback5/wlgame-test/Bn7HJ9rs7hPsVyNrb7SJAYn7eEmQ
+- **Immutable deployment URL:** https://wlgame-test-cb3jecj6e-callback5.vercel.app
+- **Inspector:** https://vercel.com/callback5/wlgame-test/GYKmKeFPa11gnSKDGv7R5LEKm6DA
 - Project dashboard: https://vercel.com/callback5/wlgame-test
 
 This confirms a successful Vercel Preview build for the listed commit. It does NOT confirm browser gameplay, mobile behavior, production release, or a running WebSocket backend.
@@ -62,6 +61,8 @@ The new project was created after connecting GitHub Login Connections. The initi
 - Server snapshots include `facingX`/`facingY` for local and remote orientation.
 - Touch joystick graphics use a dirty flag; network movement input is throttled to 20 Hz.
 - Offline Fireball projectiles now use swept segment/circle checks and disappear on collision with static arena rocks or arena bounds.
+- `NetworkClient.js` accepts `VITE_WS_SERVER_URL` (`ws://` or `wss://`) and validates the configured URL; if unset, it falls back to the current hostname on port 2567.
+- `.env.example` documents the optional endpoint; README explains setting it in the Vercel project environment. Network URL resolution is covered by Node tests.
 - Authoritative server player movement resolves overlap against the same circular arena obstacles; server Fireballs also stop on swept obstacle collision. Shared obstacle coordinates and collision math match the offline scene.
 
 ## 4. Architecture / important files
@@ -88,7 +89,7 @@ Current package scripts:
 1. **Manual browser QA is still pending:** isometric rendering, camera bounds/scroll, collision alignment, desktop and phone layouts, actor depth, FIRE tap/drag, keyboard aim, touch movement, local and network modes. User reports no major visible complaints so far; this is useful feedback but not a substitute for browser/device verification.
 2. **Offline Fireball combat lifecycle is incomplete:** obstacle collision is implemented, but offline mode has no opponent/combatant target, so local damage, knockback, death, and respawn are not yet wired.
 3. **Online obstacle collision needs gameplay verification:** authoritative player movement and Fireballs now use the same circular obstacle geometry as the offline scene; confirm sliding, edge behavior, and projectile impacts in a live multi-client session.
-4. **WebSocket hosting/configuration is incomplete:** `NetworkClient.js` currently connects to `ws(s)://<current-hostname>:2567`. Vercel hosts the frontend; it does not host the persistent Node WebSocket server. A separate persistent host and explicit server URL configuration are required.
+4. **Persistent WebSocket hosting is incomplete:** client endpoint configuration is implemented, but no persistent Node WebSocket host has been provisioned and `VITE_WS_SERVER_URL` is not set in Vercel. Vercel hosts the frontend; it does not host the persistent Node WebSocket server.
 5. No repeatable desktop/phone frame-time or memory baseline has been captured. Do not claim performance improvements without same-device before/after measurements.
 6. Object pools, texture atlases, DPR caps, and spatial partitioning remain profiling-driven backlog items.
 7. Do not invent exact Warlock Arena 0.88/0.88b mechanics or numeric balance values. The balance JSON distinguishes confirmed 0.88 values, references from other versions, and estimates.
@@ -99,7 +100,7 @@ Current package scripts:
 2. Fetch remote: `git fetch origin`; inspect `git status -sb`. Never reset/rebase/force-push blindly.
 3. Read `HANDOFF.md`, `ROADMAP.md`, `GAME_DESIGN.md`, and `docs/PERFORMANCE.md` as relevant.
 4. Confirm the exact branch HEAD and PR #1 head SHA.
-5. Run `npm install`, `npm test`, `npm run build`; for server changes also run `node --check server/index.js`.
+5. Run `npm install`, `npm test`, `npm run build`; for server changes also run `node --check server/index.js`. See `.env.example` for the optional client WebSocket URL.
 6. Check GitHub Actions for the exact current SHA.
 7. Inspect the Vercel Preview and compare its deployed SHA with the branch HEAD. Inspect production separately; do not infer it from Preview.
 8. Continue focused work on `feature/isometric-arena`; keep the PR draft until manual checks pass.
@@ -119,7 +120,7 @@ Do not reconstruct work from chat history until the repository and branch have b
 2. Test FIRE: drag aim, stationary tap forward, release outside button, cooldown, obstacle impacts; test keyboard aim and touch joystick in offline and connected modes.
 3. Verify authoritative obstacle collision with two clients: player sliding around rocks and Fireballs stopping at rocks.
 4. Decide/add an offline opponent or training target model before wiring offline damage, knockback, death, and respawn.
-5. Choose persistent WebSocket hosting and configure an explicit client server URL; then test multi-client sessions.
+5. Choose persistent WebSocket hosting, set `VITE_WS_SERVER_URL` in Vercel, and test multi-client sessions.
 6. Capture desktop and representative-phone frame-time/memory baselines before further performance tuning.
 
 ---
