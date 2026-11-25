@@ -1,11 +1,18 @@
 import { WebSocketServer } from 'ws';
 import { randomUUID } from 'node:crypto';
+import { resolveCircleCollision, segmentIntersectsCircle } from '../src/game/combat/combat-math.js';
 
 const PORT = Number(process.env.PORT ?? 2567);
 const TICK_RATE = 20;
 const WORLD = { width: 1600, height: 1000 };
 const SPEED = 230;
 const FIREBALL = { damage: 8, cooldownMs: 1400, speed: 520, radius: 9, maxDistance: 520, baseKnockback: 260 };
+const PLAYER_RADIUS = 15;
+const OBSTACLES = [
+  [390, 310, 76], [600, 220, 54], [850, 360, 90],
+  [1160, 250, 68], [1280, 650, 82], [930, 770, 58],
+  [480, 720, 88], [250, 560, 48], [710, 590, 42]
+];
 const players = new Map();
 const projectiles = new Map();
 const server = new WebSocketServer({ port: PORT });
@@ -88,8 +95,20 @@ setInterval(() => {
   const now = Date.now();
 
   for (const player of players.values()) {
-    player.x += player.inputX * SPEED * dt + player.vx * dt;
-    player.y += player.inputY * SPEED * dt + player.vy * dt;
+    let nextX = player.x + player.inputX * SPEED * dt + player.vx * dt;
+    let nextY = player.y + player.inputY * SPEED * dt + player.vy * dt;
+    // Match the offline Phaser arena's circular obstacle bodies.
+    for (let pass = 0; pass < 2; pass += 1) {
+      for (const [obstacleX, obstacleY, obstacleRadius] of OBSTACLES) {
+        const resolved = resolveCircleCollision(
+          nextX, nextY, PLAYER_RADIUS, obstacleX, obstacleY, obstacleRadius
+        );
+        nextX = resolved.x;
+        nextY = resolved.y;
+      }
+    }
+    player.x = nextX;
+    player.y = nextY;
     player.vx *= 0.88;
     player.vy *= 0.88;
     player.x = Math.max(24, Math.min(WORLD.width - 24, player.x));
@@ -103,8 +122,15 @@ setInterval(() => {
     projectile.y += stepY;
     projectile.distance += Math.hypot(stepX, stepY);
 
-    let consumed = false;
+    let consumed = OBSTACLES.some(([obstacleX, obstacleY, obstacleRadius]) =>
+      segmentIntersectsCircle(
+        projectile.x - stepX, projectile.y - stepY,
+        projectile.x, projectile.y,
+        obstacleX, obstacleY, obstacleRadius + FIREBALL.radius
+      )
+    );
     for (const target of players.values()) {
+      if (consumed) break;
       if (target.id === projectile.ownerId || projectile.hitIds.has(target.id)) continue;
       const dx = target.x - projectile.x;
       const dy = target.y - projectile.y;
