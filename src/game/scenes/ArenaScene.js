@@ -245,25 +245,33 @@ export class ArenaScene extends Phaser.Scene {
     this.drawAim();
   }
 
+  updateSkillButtonAim(pointer) {
+    if (!this.skillButtonOrigin) return;
+    const dx = pointer.x - this.skillButtonOrigin.x;
+    const dy = pointer.y - this.skillButtonOrigin.y;
+    const distance = Math.hypot(dx, dy);
+    const maxOffset = 18;
+    const scale = distance > maxOffset ? maxOffset / distance : 1;
+    const button = this.skillButtons.get('fireball');
+    if (button) {
+      button.icon.setPosition(dx * scale, dy * scale);
+      button.text.setPosition(dx * scale, dy * scale + 1);
+    }
+
+    if (distance >= 10) {
+      const direction = screenVectorToWorld(dx, dy);
+      const length = Math.hypot(direction.x, direction.y) || 1;
+      this.skillButtonAim = { x: direction.x / length, y: direction.y / length };
+    } else {
+      this.skillButtonAim = null;
+    }
+    const facingAngle = this.hero.rotation - Math.PI / 2;
+    this.drawFireballGuide(this.skillButtonAim ?? { x: Math.cos(facingAngle), y: Math.sin(facingAngle) });
+  }
+
   onArenaPointerMove(pointer) {
     if (pointer.id === this.skillButtonPointerId && this.skillButtonOrigin) {
-      const dx = pointer.x - this.skillButtonOrigin.x;
-      const dy = pointer.y - this.skillButtonOrigin.y;
-      const distance = Math.hypot(dx, dy);
-      const maxOffset = 18;
-      const scale = distance > maxOffset ? maxOffset / distance : 1;
-      const button = this.skillButtons.get('fireball');
-      if (button) {
-        button.icon.setPosition(dx * scale, dy * scale);
-        button.text.setPosition(dx * scale, dy * scale + 1);
-      }
-      if (distance >= 10) {
-        const direction = screenVectorToWorld(dx, dy);
-        const length = Math.hypot(direction.x, direction.y) || 1;
-        this.skillButtonAim = { x: direction.x / length, y: direction.y / length };
-      } else this.skillButtonAim = null;
-      const facingAngle = this.hero.rotation - Math.PI / 2;
-      this.drawFireballGuide(this.skillButtonAim ?? { x: Math.cos(facingAngle), y: Math.sin(facingAngle) });
+      this.updateSkillButtonAim(pointer);
       return;
     }
     if (pointer.id !== this.aimPointerId) return;
@@ -273,6 +281,9 @@ export class ArenaScene extends Phaser.Scene {
 
   onArenaPointerUp(pointer) {
     if (pointer.id === this.skillButtonPointerId) {
+      // Re-sample the release coordinates so the projectile uses the exact final
+      // joystick direction, even if no pointermove event arrived for the last motion.
+      this.updateSkillButtonAim(pointer);
       const draggedAim = this.skillButtonAim;
       const angle = this.hero.rotation - Math.PI / 2;
       this.skillButtonPointerId = null;
