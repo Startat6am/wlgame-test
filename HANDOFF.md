@@ -185,3 +185,12 @@ Do not reconstruct work from chat history until the repository and branch have b
 - The guide is client-rendered and does not wait for server snapshots or the 20Hz network simulation.
 - Commit: `6d6d871588b07f150c80ba052b7fd0ec508623d1`.
 - Manual touch/mouse verification remains outstanding.
+
+
+## FIRE input freeze investigation — 2026-11-26
+
+- User reported that pressing FIRE freezes the game.
+- Updated `ArenaScene.js` to cache the last FIRE pointer coordinates and skip aim recalculation/graphics clearing/redrawing when the pointer has not moved. Pointer movement still updates immediately, and release forces a final coordinate sample before casting.
+- Code commit: `582d3223be96f4df0ee7a43438a9d112b73a9bb1`.
+- This is a targeted performance hypothesis, not a confirmed root-cause diagnosis. Browser/device reproduction and verification remain required; do not claim the freeze is fixed until manually tested.
+- Next: verify CI and Preview for this code commit, then reproduce FIRE press/hold/drag/release in desktop and mobile browsers. If the freeze persists, capture browser console/performance traces and inspect Phaser pointer lifecycle and scene update cost.
