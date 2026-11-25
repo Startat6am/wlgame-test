@@ -40,6 +40,8 @@ This roadmap prioritizes a stable playable core first, then expands gameplay and
 - [x] Apply matching circular obstacle resolution to authoritative server player movement and swept obstacle collision to server Fireballs.
 - [x] Move arena obstacle definitions into one immutable shared data module consumed by both Phaser and the authoritative server; test its shape to prevent client/server map drift.
 - [x] Implement an offline training target with swept Fireball hits, health/damage, directional knockback, death, and timed respawn; pure combat lifecycle covered by automated tests. Manual gameplay tuning/verification remains pending.
+- [x] Halve Fireball knockback in both offline and authoritative server combat (260 → 130 base impulse).
+- [x] Show a translucent 100-screen-pixel direction guide from the player while the FIRE button is held; update it during aim-stick drag and clear it on release.
 - [ ] Add collision tests and gameplay regression tests.
 - [ ] Verify mobile portrait and landscape behavior.
 - [ ] Fix any measured performance regressions before expanding content.
@@ -147,3 +149,11 @@ A phase is complete only when:
 - [x] Add five unit tests covering spawn, damage/knockback, lethal damage, dead-state hit rejection, respawn, and world-bound clamping.
 - [ ] Manually verify gameplay feel and interaction in an accessible browser; Vercel Preview may be protected by SSO.
 - Verification: CI run #69, commit `f284a66d446b6fb9026eabdcbe5acf6efe872fe5`, SUCCESS. Vercel Preview deployment `dpl_FxwnuJ3EdhD3v8khXsFgmvPjiZ5a`, READY.
+
+
+## Fireball feel update — 2026-11-26
+
+- [x] Halve base Fireball knockback consistently in offline and server simulation: 260 → 130.
+- [x] Add a translucent 100px projected-screen aim guide from the hero while FIRE is pressed; guide follows drag direction and clears when the press is released.
+- [ ] Manually confirm guide visibility/angle on desktop and mobile, plus equal knockback in offline and network matches.
+- Verification pending for latest code commit; see HANDOFF.md for the latest CI/Preview checkpoint.
