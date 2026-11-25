@@ -50,3 +50,26 @@ export function isCooldownReady(nowMs, lastCastMs, cooldownSeconds) {
   nonNegativeFinite(cooldownSeconds, 'cooldownSeconds');
   return nowMs - lastCastMs >= cooldownSeconds * 1000;
 }
+
+
+export function segmentIntersectsCircle(startX, startY, endX, endY, centerX, centerY, radius) {
+  for (const [value, name] of [
+    [startX, 'startX'], [startY, 'startY'], [endX, 'endX'], [endY, 'endY'],
+    [centerX, 'centerX'], [centerY, 'centerY']
+  ]) {
+    if (!Number.isFinite(value)) throw new TypeError(`${name} must be a finite number`);
+  }
+  nonNegativeFinite(radius, 'radius');
+
+  const dx = endX - startX;
+  const dy = endY - startY;
+  const lengthSquared = dx * dx + dy * dy;
+  const projection = lengthSquared === 0
+    ? 0
+    : Math.max(0, Math.min(1, ((centerX - startX) * dx + (centerY - startY) * dy) / lengthSquared));
+  const closestX = startX + projection * dx;
+  const closestY = startY + projection * dy;
+  const offsetX = centerX - closestX;
+  const offsetY = centerY - closestY;
+  return offsetX * offsetX + offsetY * offsetY <= radius * radius;
+}
