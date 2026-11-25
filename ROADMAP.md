@@ -36,13 +36,15 @@ This roadmap prioritizes a stable playable core first, then expands gameplay and
 - [ ] Establish repeatable desktop/mobile performance baselines.
 - [ ] Add frame-time history and p95/p99 reporting.
 - [ ] Verify the joystick dirty-render and 20 Hz input changes in browser.
-- [ ] Complete local projectile collision, damage, knockback, death, and respawn.
+- [x] Add swept segment/circle collision tests; stop offline Fireballs at static arena obstacles.
+- [x] Apply matching circular obstacle resolution to authoritative server player movement and swept obstacle collision to server Fireballs.
+- [ ] Complete local projectile combat lifecycle: collision against opponents, damage, knockback, death, and respawn. Offline Fireball now stops on arena obstacles; offline opponent targets/lifecycle are still absent.
 - [ ] Add collision tests and gameplay regression tests.
 - [ ] Verify mobile portrait and landscape behavior.
 - [ ] Fix any measured performance regressions before expanding content.
 
 ### P1 — Core arena and simulation
-- [ ] Complete arena boundaries and obstacle collision rules in both offline and authoritative online simulation.
+- [ ] Complete arena boundaries and obstacle collision rules in both offline and authoritative online simulation (circular player/obstacle resolution and swept projectile/obstacle collision are implemented in the server; browser gameplay verification remains pending).
 - [ ] Implement lava zones and damage/death flow.
 - [ ] Separate simulation from presentation where required.
 - [ ] Add projectile/effect pooling if profiling demonstrates allocation pressure.
@@ -122,6 +124,6 @@ A phase is complete only when:
 ## Current next actions
 
 1. User reports no major visible issues so far; retain this as feedback, not as a substitute for device/browser QA. Perform targeted Preview checks for arena bounds, camera, obstacle alignment, actor depth, desktop/phone layouts, FIRE and touch input before merging P6a.
-2. Continue P0 with local projectile collision against arena obstacles and automated segment/circle collision tests. Damage, knockback, death, and respawn still require an offline target/combatant model; do not mark them complete while offline mode has no opponent.
-3. Make authoritative online obstacle collision match the offline arena geometry.
+2. Manually verify obstacle collision in offline and online play, including sliding along rock edges and Fireball impacts.
+3. Define or add an offline target/combatant model before implementing offline Fireball damage, knockback, death, and respawn; do not invent an opponent mode silently.
 4. Configure persistent WebSocket hosting and an explicit client server URL before claiming online multiplayer is available outside local development.
