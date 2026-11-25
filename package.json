@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0",
     "server": "node server/index.js",
-    "test": "node --test src/game/combat/*.test.js src/game/geometry/*.test.js"
+    "test": "node --test src/game/combat/*.test.js src/game/geometry/*.test.js src/net/*.test.js"
   },
   "dependencies": {
     "phaser": "^3.90.0",
