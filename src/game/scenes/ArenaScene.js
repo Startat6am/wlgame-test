@@ -3,6 +3,7 @@ import balance from '../data/ability-balance.json';
 import { TouchControls } from '../input/TouchControls.js';
 import { NetworkClient } from '../../net/NetworkClient.js';
 import { WORLD, ISO_VIEW, worldToScreen, screenToWorld, screenVectorToWorld, projectedAngle } from '../geometry/isometric.js';
+import { segmentIntersectsCircle } from '../combat/combat-math.js';
 
 const SPEED = balance.baseline.movementSpeed.value;
 const FIREBALL = balance.abilities.find((ability) => ability.id === 'fireball');
@@ -106,6 +107,7 @@ export class ArenaScene extends Phaser.Scene {
       [1160, 250, 68], [1280, 650, 82], [930, 770, 58],
       [480, 720, 88], [250, 560, 48], [710, 590, 42]
     ];
+    this.obstacleCircles = rocks.map(([x, y, radius]) => ({ x, y, radius }));
     rocks.forEach(([x, y, radius]) => {
       const p = worldToScreen(x, y);
       const rock = this.add.circle(x, y, radius, 0x20291f, 0).setStrokeStyle(0);
@@ -382,6 +384,8 @@ export class ArenaScene extends Phaser.Scene {
     const maxRange = FIREBALL.range.value;
     for (let i = this.localProjectiles.length - 1; i >= 0; i -= 1) {
       const projectile = this.localProjectiles[i];
+      const previousX = projectile.x;
+      const previousY = projectile.y;
       const stepX = projectile.velocityX * delta / 1000;
       const stepY = projectile.velocityY * delta / 1000;
       projectile.x += stepX;
@@ -389,7 +393,15 @@ export class ArenaScene extends Phaser.Scene {
       const p = worldToScreen(projectile.x, projectile.y);
       projectile.view.setPosition(p.x, p.y).setDepth(p.y + 30);
       projectile.travelled += Math.hypot(stepX, stepY);
-      if (projectile.travelled >= maxRange) {
+      const hitObstacle = this.obstacleCircles.some((obstacle) =>
+        segmentIntersectsCircle(
+          previousX, previousY, projectile.x, projectile.y,
+          obstacle.x, obstacle.y, obstacle.radius + 10
+        )
+      );
+      const outsideArena = projectile.x < 0 || projectile.x > WORLD.width ||
+        projectile.y < 0 || projectile.y > WORLD.height;
+      if (hitObstacle || outsideArena || projectile.travelled >= maxRange) {
         projectile.view.destroy();
         this.localProjectiles.splice(i, 1);
       }
