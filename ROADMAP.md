@@ -39,7 +39,7 @@ This roadmap prioritizes a stable playable core first, then expands gameplay and
 - [x] Add swept segment/circle collision tests; stop offline Fireballs at static arena obstacles.
 - [x] Apply matching circular obstacle resolution to authoritative server player movement and swept obstacle collision to server Fireballs.
 - [x] Move arena obstacle definitions into one immutable shared data module consumed by both Phaser and the authoritative server; test its shape to prevent client/server map drift.
-- [ ] Complete local projectile combat lifecycle: collision against opponents, damage, knockback, death, and respawn. Offline Fireball now stops on arena obstacles; offline opponent targets/lifecycle are still absent.
+- [x] Implement an offline training target with swept Fireball hits, health/damage, directional knockback, death, and timed respawn; pure combat lifecycle covered by automated tests. Manual gameplay tuning/verification remains pending.
 - [ ] Add collision tests and gameplay regression tests.
 - [ ] Verify mobile portrait and landscape behavior.
 - [ ] Fix any measured performance regressions before expanding content.
@@ -126,7 +126,7 @@ A phase is complete only when:
 
 1. User reports no major visible issues so far; retain this as feedback, not as a substitute for device/browser QA. Perform targeted Preview checks for arena bounds, camera, obstacle alignment, actor depth, desktop/phone layouts, FIRE and touch input before merging P6a.
 2. Manually verify obstacle collision in offline and online play, including sliding along rock edges and Fireball impacts.
-3. Define or add an offline target/combatant model before implementing offline Fireball damage, knockback, death, and respawn; do not invent an opponent mode silently.
+3. Manually playtest the new offline training target: verify hit registration, HP display, knockback against arena boundaries/obstacles, lethal hit, and 1.8-second respawn. Current target is explicitly a prototype training dummy, not an AI opponent.
 4. Configure persistent WebSocket hosting and an explicit client server URL before claiming online multiplayer is available outside local development.
 
 
@@ -137,3 +137,13 @@ A phase is complete only when:
 - Independent clean-environment verification on this branch: `npm install`, `npm test` (22/22 passing), `npm run build`, and `node --check server/index.js` all exited successfully. Vite reports a non-fatal large-chunk warning: main JS output is about 1.5 MB uncompressed / 347 KB gzip.
 - Browser smoke check: local Vite page loaded with title “WLGame — Warlock Arena”. The deployed Preview redirected to Vercel login/SSO in the test browser, so gameplay interaction on the deployed Preview was not verified. No manual gameplay QA is claimed.
 - Next: arrange authenticated Preview access or use an accessible test deployment, then exercise movement, camera, collision, FIRE, and responsive layouts. Track JS bundle splitting as a separate measured optimization task.
+
+
+## Offline combat milestone — 2026-11-26
+
+- [x] Add a standalone offline training-target state module with damage, damage-point accumulation, directional knockback, death state, and timed respawn.
+- [x] Connect local Fireball swept collision to the target; projectiles still stop at static obstacles and arena bounds.
+- [x] Render target health/respawn state in the isometric scene; hide the training target when the WebSocket client connects.
+- [x] Add five unit tests covering spawn, damage/knockback, lethal damage, dead-state hit rejection, respawn, and world-bound clamping.
+- [ ] Manually verify gameplay feel and interaction in an accessible browser; Vercel Preview may be protected by SSO.
+- Verification: CI run #65, commit `9f6d393b9f9edde5a53fa2250b9b926af5734ab6`, SUCCESS. Vercel Preview deployment `dpl_Fp4D524YZHW5RRSz9Ch1PQ8zsAf3`, READY.
