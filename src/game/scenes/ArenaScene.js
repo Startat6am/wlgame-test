@@ -5,6 +5,7 @@ import { NetworkClient } from '../../net/NetworkClient.js';
 import { WORLD, ISO_VIEW, worldToScreen, screenToWorld, screenVectorToWorld, projectedAngle } from '../geometry/isometric.js';
 import { segmentIntersectsCircle } from '../combat/combat-math.js';
 import { ARENA_OBSTACLES } from '../data/arena.js';
+import { createTrainingTarget, hitTrainingTarget, updateTrainingTarget } from '../combat/offline-combat.js';
 
 const SPEED = balance.baseline.movementSpeed.value;
 const FIREBALL = balance.abilities.find((ability) => ability.id === 'fireball');
@@ -45,6 +46,8 @@ export class ArenaScene extends Phaser.Scene {
       (event) => this.handleCombatEvent(event)
     );
     this.network.connect();
+    this.trainingTarget = createTrainingTarget();
+    this.createTrainingTargetView();
 
     this.add.text(18, 14, 'WARLOCK ARENA', {
       fontFamily: 'Georgia, serif', fontSize: '14px', color: '#e4d7aa',
@@ -149,6 +152,28 @@ export class ArenaScene extends Phaser.Scene {
       fontFamily: 'Georgia, serif', fontSize: '12px', color: '#f1e6bd',
       stroke: '#172017', strokeThickness: 3
     }).setOrigin(0.5, 1).setDepth(p.y + 2);
+  }
+
+  createTrainingTargetView() {
+    const p = worldToScreen(this.trainingTarget.x, this.trainingTarget.y);
+    this.trainingTargetShadow = this.add.ellipse(p.x, p.y + 7, 48, 20, 0x101810, 0.5).setDepth(p.y - 1);
+    this.trainingTargetSprite = this.add.image(p.x, p.y, 'warlock-hero')
+      .setOrigin(0.5, 1).setTint(0x9aa7bd).setDepth(p.y + 1);
+    this.trainingTargetLabel = this.add.text(p.x, p.y - 48, 'Training target · 100 HP', {
+      fontFamily: 'Arial, sans-serif', fontSize: '11px', color: '#dbe6ff',
+      stroke: '#172017', strokeThickness: 3
+    }).setOrigin(0.5, 1).setDepth(p.y + 2);
+  }
+
+  updateTrainingTargetView() {
+    if (!this.trainingTargetSprite) return;
+    const target = this.trainingTarget;
+    const p = worldToScreen(target.x, target.y);
+    this.trainingTargetSprite.setPosition(p.x, p.y)
+      .setDepth(p.y + 1).setAlpha(target.alive ? 1 : 0.35);
+    this.trainingTargetShadow.setPosition(p.x, p.y + 7).setDepth(p.y - 1);
+    this.trainingTargetLabel.setPosition(p.x, p.y - 48).setDepth(p.y + 2)
+      .setText(target.alive ? `Training target · ${Math.ceil(target.health)} HP` : 'Training target · respawning');
   }
 
   createSkillBar() {
@@ -390,6 +415,19 @@ export class ArenaScene extends Phaser.Scene {
       const p = worldToScreen(projectile.x, projectile.y);
       projectile.view.setPosition(p.x, p.y).setDepth(p.y + 30);
       projectile.travelled += Math.hypot(stepX, stepY);
+      const targetHit = this.trainingTarget?.alive && segmentIntersectsCircle(
+        previousX, previousY, projectile.x, projectile.y,
+        this.trainingTarget.x, this.trainingTarget.y, this.trainingTarget.radius + 10
+      );
+      if (targetHit) {
+        const hit = hitTrainingTarget(
+          this.trainingTarget, FIREBALL.damage.value,
+          projectile.velocityX, projectile.velocityY, this.time.now
+        );
+        this.trainingTarget = hit.target;
+        this.cameras.main.shake(90, 0.0015);
+        if (hit.killed) this.cameras.main.flash(140, 220, 230, 255);
+      }
       const hitObstacle = this.obstacleCircles.some((obstacle) =>
         segmentIntersectsCircle(
           previousX, previousY, projectile.x, projectile.y,
@@ -398,7 +436,7 @@ export class ArenaScene extends Phaser.Scene {
       );
       const outsideArena = projectile.x < 0 || projectile.x > WORLD.width ||
         projectile.y < 0 || projectile.y > WORLD.height;
-      if (hitObstacle || outsideArena || projectile.travelled >= maxRange) {
+      if (targetHit || hitObstacle || outsideArena || projectile.travelled >= maxRange) {
         projectile.view.destroy();
         this.localProjectiles.splice(i, 1);
       }
@@ -421,6 +459,17 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   setConnectionStatus(status) {
+    const connected = status === 'Сервер подключён';
+    if (connected && this.trainingTargetSprite) {
+      this.trainingTargetSprite.destroy();
+      this.trainingTargetShadow.destroy();
+      this.trainingTargetLabel.destroy();
+      this.trainingTargetSprite = null;
+      this.trainingTargetShadow = null;
+      this.trainingTargetLabel = null;
+    } else if (!connected && !this.trainingTargetSprite && this.trainingTarget) {
+      this.createTrainingTargetView();
+    }
     const label = document.getElementById('connection-label');
     const dot = document.getElementById('connection-dot');
     if (label) label.textContent = status;
@@ -428,6 +477,10 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   update(_time, delta) {
+    if (this.trainingTarget && !this.network.connected) {
+      this.trainingTarget = updateTrainingTarget(this.trainingTarget, delta, this.time.now, WORLD);
+      this.updateTrainingTargetView();
+    }
     this.updateLocalProjectiles(delta);
     if (this.time.now >= this.nextFpsUpdate) {
       const actualFps = this.game.loop.actualFps;
