@@ -28,7 +28,7 @@ This roadmap prioritizes a stable playable core first, then expands gameplay and
 - [x] Initial 2D isometric projection layer on `feature/isometric-arena`.
 - [x] Preview deployment for the isometric branch on the new Vercel team.
 
-**Verification snapshot (2026-11-25):** GitHub Actions run #53 (run ID `45677306557`) passed on `85cc36387ba7b55b5deb69229b0cf39400aa01b5`: Vite build, all Node tests (combat, isometric geometry, and WebSocket URL resolution), and server syntax validation. Vercel Preview deployment `dpl_GYKmKeFPa11gnSKDGv7R5LEKm6DA` for the same branch/commit reported READY. The Vite build still emits a non-blocking large-chunk warning (~1.5 MB JS); profile and split only when justified. This verifies build/deployment only; manual browser gameplay checks have not yet been completed. The old team's Vercel build-rate-limit failure is separate from the new team's successful project deployment.
+**Verification snapshot (2026-11-25):** GitHub Actions run #60 (run ID `45683538158`) passed on `c1354b8600dd318c4aecc6c4973dbce0fc374545`: Vite build, all Node tests (combat, isometric geometry, shared arena data, and WebSocket URL resolution), and server syntax validation. Vercel Preview deployment `dpl_9JTHFQKDLv8nfhSFAbHDHFh3s4fh` for the same branch/commit reported READY. This verifies build/deployment only; manual browser gameplay checks have not yet been completed. The old team's Vercel build-rate-limit failure is separate from the new team's successful project deployment.
 
 ## Roadmap
 
@@ -38,6 +38,7 @@ This roadmap prioritizes a stable playable core first, then expands gameplay and
 - [ ] Verify the joystick dirty-render and 20 Hz input changes in browser.
 - [x] Add swept segment/circle collision tests; stop offline Fireballs at static arena obstacles.
 - [x] Apply matching circular obstacle resolution to authoritative server player movement and swept obstacle collision to server Fireballs.
+- [x] Move arena obstacle definitions into one immutable shared data module consumed by both Phaser and the authoritative server; test its shape to prevent client/server map drift.
 - [ ] Complete local projectile combat lifecycle: collision against opponents, damage, knockback, death, and respawn. Offline Fireball now stops on arena obstacles; offline opponent targets/lifecycle are still absent.
 - [ ] Add collision tests and gameplay regression tests.
 - [ ] Verify mobile portrait and landscape behavior.
