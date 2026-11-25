@@ -28,7 +28,7 @@ This roadmap prioritizes a stable playable core first, then expands gameplay and
 - [x] Initial 2D isometric projection layer on `feature/isometric-arena`.
 - [x] Preview deployment for the isometric branch on the new Vercel team.
 
-**Verification snapshot (2026-11-25):** GitHub Actions run #45 (run ID `45676652010`) passed on application commit `5dba11606ddd14f14d874321e86380969d6c2748`: dependency install, Vite build, `npm test`, and `node --check server/index.js`. Documentation checkpoint run #47 (run ID `45676851907`) also passed on `760a936d73616f8d3d8ae3b84de123a842480250`. Vercel Preview deployment `dpl_Bn7HJ9rs7hPsVyNrb7SJAYn7eEmQ` for branch `feature/isometric-arena`, commit `760a936d73616f8d3d8ae3b84de123a842480250`, reported READY. This verifies build/deployment only; manual browser gameplay checks have not yet been completed. The old team's Vercel build-rate-limit failure is separate from the new team's successful project deployment.
+**Verification snapshot (2026-11-25):** GitHub Actions run #53 (run ID `45677306557`) passed on `85cc36387ba7b55b5deb69229b0cf39400aa01b5`: Vite build, all Node tests (combat, isometric geometry, and WebSocket URL resolution), and server syntax validation. Vercel Preview deployment `dpl_GYKmKeFPa11gnSKDGv7R5LEKm6DA` for the same branch/commit reported READY. The Vite build still emits a non-blocking large-chunk warning (~1.5 MB JS); profile and split only when justified. This verifies build/deployment only; manual browser gameplay checks have not yet been completed. The old team's Vercel build-rate-limit failure is separate from the new team's successful project deployment.
 
 ## Roadmap
 
@@ -60,7 +60,7 @@ This roadmap prioritizes a stable playable core first, then expands gameplay and
 
 ### P3 — Online multiplayer
 - [ ] Deploy the Node.js WebSocket server on persistent hosting separate from Vercel.
-- [ ] Configure the client with an explicit server URL.
+- [x] Support an explicit client WebSocket endpoint through `VITE_WS_SERVER_URL` with a same-host development fallback.
 - [ ] Add rooms, lobby, ready state, match lifecycle, and disconnect handling.
 - [ ] Harden server validation, rate limits, and slow-client handling.
 - [ ] Load-test multiple concurrent matches.
