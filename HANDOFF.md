@@ -147,3 +147,13 @@ Do not reconstruct work from chat history until the repository and branch have b
 - **Vercel Preview:** deployment `dpl_Fp4D524YZHW5RRSz9Ch1PQ8zsAf3`, READY, commit `9f6d393b9f9edde5a53fa2250b9b926af5734ab6`; URL https://wlgame-test-7h39h0m8e-callback5.vercel.app
 - **Manual QA remains incomplete:** earlier Preview access redirected to Vercel SSO. The new READY deployment confirms build/deploy only, not gameplay. Re-test through authenticated access or an intentionally public preview.
 - **Next:** manual offline combat and isometric control verification; fix any observed issues. Then proceed with persistent WebSocket hosting and two-client gameplay. PR #1 remains Draft; do not merge before browser QA.
+
+
+## Verification follow-up — 2026-11-26
+
+- Latest application code HEAD: `f284a66d446b6fb9026eabdcbe5acf6efe872fe5`.
+- The offline target now also resolves its knockback movement against the shared static arena obstacle circles (two deterministic resolution passes); it cannot be pushed through a rock by a Fireball hit.
+- Added a sixth offline-combat unit test for target-vs-obstacle collision.
+- GitHub Actions WLGame CI run #69 (ID `45709553240`) completed SUCCESS on the exact code HEAD: https://github.com/Startat6am/wlgame-test/actions/runs/45709553240. Build, full test command, and server syntax validation passed.
+- Vercel Preview deployment `dpl_FxwnuJ3EdhD3v8khXsFgmvPjiZ5a` is READY for the exact code HEAD; URL https://wlgame-test-ekmrf1e6r-callback5.vercel.app.
+- Next commit is documentation-only; re-check branch HEAD, CI, and deployment after the handoff refresh.
