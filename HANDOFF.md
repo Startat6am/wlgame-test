@@ -9,8 +9,8 @@
 - **PR:** https://github.com/Startat6am/wlgame-test/pull/1 (open, draft; do not merge until manual browser QA is complete).
 - **Base branch:** `main`, base commit at PR creation: `b30dccee049e99af70a9563deccb2f97676183b3`.
 - **Latest application-code commit:** `5dba11606ddd14f14d874321e86380969d6c2748` — aligns authoritative player and Fireball obstacle collisions with the offline arena geometry.
-- **Latest roadmap refresh:** `7870dd14bf6432fa730f55919720cad877c05327` — records the handoff workflow and obstacle-collision progress.
-- **Current handoff refresh:** documentation-only; check branch HEAD for the resulting SHA after commit.
+- **Latest roadmap refresh:** `e87185362d1b4cdd0c283d253bb2fafd9b732e11` — records the handoff workflow, obstacle-collision progress, and current verification snapshot.
+- **Previous handoff refresh:** `760a936d73616f8d3d8ae3b84de123a842480250`; this next commit is documentation-only.
 - **Checkpoint date:** 2026-11-25.
 
 The source of truth is the current remote branch. Documentation-only commits can advance HEAD without changing the application-code checkpoint.
@@ -25,6 +25,8 @@ The source of truth is the current remote branch. Documentation-only commits can
 - **Result:** SUCCESS.
 - Passed steps: dependency install, `npm run build`, `npm test`, and `node --check server/index.js`.
 - Run URL: https://github.com/Startat6am/wlgame-test/actions/runs/45676652010
+- **Documentation checkpoint:** run #47, run ID `45676851907`, SUCCESS on `760a936d73616f8d3d8ae3b84de123a842480250` (includes the handoff and roadmap updates; application code unchanged).
+- Run URL: https://github.com/Startat6am/wlgame-test/actions/runs/45676851907
 
 ### Vercel
 
@@ -33,12 +35,12 @@ The source of truth is the current remote branch. Documentation-only commits can
 - **Project ID:** `prj_278OZbqZFGgj3fYYfS8aF3laAbhx`
 - **Linked Git repository:** `Startat6am/wlgame-test`
 - **Preview branch:** `feature/isometric-arena`
-- **Preview commit:** `5dba11606ddd14f14d874321e86380969d6c2748`
-- **Preview deployment:** `dpl_EWYxNK7RNQ6u1idanftWLhzcUoCS`
+- **Preview commit:** `760a936d73616f8d3d8ae3b84de123a842480250`
+- **Preview deployment:** `dpl_Bn7HJ9rs7hPsVyNrb7SJAYn7eEmQ`
 - **Preview state:** READY (verified 2026-11-25).
 - **Preview URL:** https://wlgame-test-git-feature-isometric-arena-callback5.vercel.app
-- **Immutable deployment URL:** https://wlgame-test-513rh1na6-callback5.vercel.app
-- **Inspector:** https://vercel.com/callback5/wlgame-test/EWYxNK7RNQ6u1idanftWLhzcUoCS
+- **Immutable deployment URL:** https://wlgame-test-n27zgk1yr-callback5.vercel.app
+- **Inspector:** https://vercel.com/callback5/wlgame-test/Bn7HJ9rs7hPsVyNrb7SJAYn7eEmQ
 - Project dashboard: https://vercel.com/callback5/wlgame-test
 
 This confirms a successful Vercel Preview build for the listed commit. It does NOT confirm browser gameplay, mobile behavior, production release, or a running WebSocket backend.
