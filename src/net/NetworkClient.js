@@ -1,3 +1,5 @@
+import { resolveWebSocketUrl } from './websocket-url.js';
+
 export class NetworkClient {
   constructor(onState, onStatus, onWelcome, onCombat) {
     this.onState = onState;
@@ -10,8 +12,13 @@ export class NetworkClient {
   }
 
   connect() {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const url = `${protocol}//${window.location.hostname}:2567`;
+    let url;
+    try {
+      url = resolveWebSocketUrl(window.location, import.meta.env.VITE_WS_SERVER_URL);
+    } catch {
+      this.onStatus('Локальная игра');
+      return;
+    }
     try {
       this.socket = new WebSocket(url);
       this.socket.addEventListener('open', () => {
