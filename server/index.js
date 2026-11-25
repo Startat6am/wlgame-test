@@ -1,6 +1,7 @@
 import { WebSocketServer } from 'ws';
 import { randomUUID } from 'node:crypto';
 import { resolveCircleCollision, segmentIntersectsCircle } from '../src/game/combat/combat-math.js';
+import { ARENA_OBSTACLES } from '../src/game/data/arena.js';
 
 const PORT = Number(process.env.PORT ?? 2567);
 const TICK_RATE = 20;
@@ -8,11 +9,7 @@ const WORLD = { width: 1600, height: 1000 };
 const SPEED = 230;
 const FIREBALL = { damage: 8, cooldownMs: 1400, speed: 520, radius: 9, maxDistance: 520, baseKnockback: 260 };
 const PLAYER_RADIUS = 15;
-const OBSTACLES = [
-  [390, 310, 76], [600, 220, 54], [850, 360, 90],
-  [1160, 250, 68], [1280, 650, 82], [930, 770, 58],
-  [480, 720, 88], [250, 560, 48], [710, 590, 42]
-];
+const OBSTACLES = ARENA_OBSTACLES.map(({ x, y, radius }) => [x, y, radius]);
 const players = new Map();
 const projectiles = new Map();
 const server = new WebSocketServer({ port: PORT });
