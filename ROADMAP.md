@@ -101,6 +101,14 @@ This roadmap prioritizes a stable playable core first, then expands gameplay and
 - [ ] Verify FIRE tap/drag and keyboard/touch movement in local and network modes.
 - [ ] Complete visual regression review and merge only after manual checks pass.
 
+## Handoff and session recovery
+
+- `HANDOFF.md` is the canonical recovery checkpoint for interrupted chats, browser freezes, and context loss. It records the active branch/PR, verified commit, CI and Vercel deployment evidence, architecture, known gaps, and exact next actions.
+- `ROADMAP.md` tracks project scope and milestones; it links to the handoff rather than duplicating volatile deployment details.
+- After every meaningful implementation or deployment milestone, update `HANDOFF.md` with verified facts and update this roadmap if priorities or completion status changed.
+- On resumption, verify GitHub branch HEAD, PR, CI, and Vercel Preview before editing. Never infer a successful build, deployment, manual QA, or merge from an older checkpoint.
+- Recovery entry point: [HANDOFF.md](./HANDOFF.md).
+
 ## Definition of done for each phase
 
 A phase is complete only when:
@@ -113,9 +121,7 @@ A phase is complete only when:
 
 ## Current next actions
 
-1. Perform browser QA on the isometric Preview: arena bounds, camera follow/scroll, obstacle collision footprint, actor depth, desktop and phone aspect ratios.
-2. Verify FIRE tap/drag, keyboard aim, and touch joystick in offline and connected modes.
-3. Fix issues found by those checks before merging P6a.
-4. Continue P0: add local projectile collision/damage lifecycle with automated tests; preserve the distinction between offline visual-only fireball and authoritative online combat until implemented.
-5. Make online obstacle collision match the offline arena geometry.
-6. Configure persistent WebSocket hosting and an explicit client server URL before claiming online multiplayer is available outside local development.
+1. User reports no major visible issues so far; retain this as feedback, not as a substitute for device/browser QA. Perform targeted Preview checks for arena bounds, camera, obstacle alignment, actor depth, desktop/phone layouts, FIRE and touch input before merging P6a.
+2. Continue P0 with local projectile collision against arena obstacles and automated segment/circle collision tests. Damage, knockback, death, and respawn still require an offline target/combatant model; do not mark them complete while offline mode has no opponent.
+3. Make authoritative online obstacle collision match the offline arena geometry.
+4. Configure persistent WebSocket hosting and an explicit client server URL before claiming online multiplayer is available outside local development.
