@@ -157,3 +157,12 @@ Do not reconstruct work from chat history until the repository and branch have b
 - GitHub Actions WLGame CI run #69 (ID `45709553240`) completed SUCCESS on the exact code HEAD: https://github.com/Startat6am/wlgame-test/actions/runs/45709553240. Build, full test command, and server syntax validation passed.
 - Vercel Preview deployment `dpl_FxwnuJ3EdhD3v8khXsFgmvPjiZ5a` is READY for the exact code HEAD; URL https://wlgame-test-ekmrf1e6r-callback5.vercel.app.
 - Next commit is documentation-only; re-check branch HEAD, CI, and deployment after the handoff refresh.
+
+
+## Fireball feel update — 2026-11-26
+
+- **Code changes:** `src/game/combat/offline-combat.js` base knockback reduced from 260 to 130; `server/index.js` authoritative Fireball base knockback likewise reduced from 260 to 130.
+- **Aim feedback:** `ArenaScene.js` now draws a translucent 100-screen-pixel projected direction guide from the hero while the FIRE button is held. It follows the drag direction, defaults to current facing while stationary, and clears on release. Guide length is measured in projected screen pixels (not world units).
+- **Test:** updated offline combat assertion to confirm the lower impulse. Full CI and latest Preview must be checked against the exact branch HEAD before describing this update as verified.
+- **Manual QA:** user confirmed offline hit registration, HP, knockback, and death work before this adjustment. New knockback scale and aim-guide visibility/angle still need manual confirmation on desktop and mobile.
+- **Next:** verify latest CI/Preview, then ask user to confirm reduced push and the 100px guide; proceed to online host after input UX is accepted.
