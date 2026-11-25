@@ -128,3 +128,12 @@ A phase is complete only when:
 2. Manually verify obstacle collision in offline and online play, including sliding along rock edges and Fireball impacts.
 3. Define or add an offline target/combatant model before implementing offline Fireball damage, knockback, death, and respawn; do not invent an opponent mode silently.
 4. Configure persistent WebSocket hosting and an explicit client server URL before claiming online multiplayer is available outside local development.
+
+
+## Verification update — 2026-11-25 (session continuation)
+
+- Current branch HEAD at inspection: `d922b04df6ed19095dbed9f8a228353677d06cd6`.
+- GitHub Actions WLGame CI run #62 (run ID `45683692800`) completed SUCCESS for this HEAD; Vercel status check also SUCCESS.
+- Independent clean-environment verification on this branch: `npm install`, `npm test` (22/22 passing), `npm run build`, and `node --check server/index.js` all exited successfully. Vite reports a non-fatal large-chunk warning: main JS output is about 1.5 MB uncompressed / 347 KB gzip.
+- Browser smoke check: local Vite page loaded with title “WLGame — Warlock Arena”. The deployed Preview redirected to Vercel login/SSO in the test browser, so gameplay interaction on the deployed Preview was not verified. No manual gameplay QA is claimed.
+- Next: arrange authenticated Preview access or use an accessible test deployment, then exercise movement, camera, collision, FIRE, and responsive layouts. Track JS bundle splitting as a separate measured optimization task.
