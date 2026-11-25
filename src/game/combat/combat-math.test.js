@@ -5,7 +5,8 @@ import {
   calculateKnockback,
   calculateLavaDamage,
   isCooldownReady,
-  segmentIntersectsCircle
+  segmentIntersectsCircle,
+  resolveCircleCollision
 } from './combat-math.js';
 
 test('damage reduces health and accumulates damage points', () => {
@@ -71,4 +72,23 @@ test('segment-circle collision handles endpoints and zero-length movement', () =
 test('segment-circle collision rejects invalid inputs', () => {
   assert.throws(() => segmentIntersectsCircle(0, 0, Infinity, 0, 0, 0, 1), TypeError);
   assert.throws(() => segmentIntersectsCircle(0, 0, 1, 0, 0, 0, -1), TypeError);
+});
+
+
+test('circle collision pushes players out of overlapping obstacles', () => {
+  assert.deepEqual(resolveCircleCollision(5, 0, 15, 0, 0, 20), {
+    x: 35, y: 0, collided: true
+  });
+});
+
+test('circle collision leaves separated bodies unchanged', () => {
+  assert.deepEqual(resolveCircleCollision(40, 0, 15, 0, 0, 20), {
+    x: 40, y: 0, collided: false
+  });
+});
+
+test('circle collision resolves coincident centers deterministically', () => {
+  assert.deepEqual(resolveCircleCollision(0, 0, 15, 0, 0, 20), {
+    x: 35, y: 0, collided: true
+  });
 });
