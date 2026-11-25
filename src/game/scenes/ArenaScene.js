@@ -478,7 +478,7 @@ export class ArenaScene extends Phaser.Scene {
 
   update(_time, delta) {
     if (this.trainingTarget && !this.network.connected) {
-      this.trainingTarget = updateTrainingTarget(this.trainingTarget, delta, this.time.now, WORLD);
+      this.trainingTarget = updateTrainingTarget(this.trainingTarget, delta, this.time.now, WORLD, this.obstacleCircles);
       this.updateTrainingTargetView();
     }
     this.updateLocalProjectiles(delta);
