@@ -22,6 +22,7 @@ export class ArenaScene extends Phaser.Scene {
     this.skillButtonPointerId = null;
     this.skillButtonOrigin = null;
     this.skillButtonAim = null;
+    this.lastSkillPointerPosition = null;
     this.localProjectiles = [];
     this.nextFpsUpdate = 0;
     this.networkInputAccumulator = 0;
@@ -234,6 +235,7 @@ export class ArenaScene extends Phaser.Scene {
       this.skillButtonPointerId = pointer.id;
       this.skillButtonOrigin = { x: pointer.x, y: pointer.y };
       this.skillButtonAim = null;
+      this.lastSkillPointerPosition = null;
       const facingAngle = this.hero.rotation - Math.PI / 2;
       this.drawFireballGuide({ x: Math.cos(facingAngle), y: Math.sin(facingAngle) });
       return;
@@ -245,8 +247,11 @@ export class ArenaScene extends Phaser.Scene {
     this.drawAim();
   }
 
-  updateSkillButtonAim(pointer) {
+  updateSkillButtonAim(pointer, force = false) {
     if (!this.skillButtonOrigin) return;
+    if (!force && this.lastSkillPointerPosition &&
+        pointer.x === this.lastSkillPointerPosition.x && pointer.y === this.lastSkillPointerPosition.y) return;
+    this.lastSkillPointerPosition = { x: pointer.x, y: pointer.y };
     const dx = pointer.x - this.skillButtonOrigin.x;
     const dy = pointer.y - this.skillButtonOrigin.y;
     const distance = Math.hypot(dx, dy);
@@ -285,12 +290,13 @@ export class ArenaScene extends Phaser.Scene {
     if (pointer.id === this.skillButtonPointerId) {
       // Re-sample the release coordinates so the projectile uses the exact final
       // joystick direction, even if no pointermove event arrived for the last motion.
-      this.updateSkillButtonAim(pointer);
+      this.updateSkillButtonAim(pointer, true);
       const draggedAim = this.skillButtonAim;
       const angle = this.hero.rotation - Math.PI / 2;
       this.skillButtonPointerId = null;
       this.skillButtonOrigin = null;
       this.skillButtonAim = null;
+      this.lastSkillPointerPosition = null;
       this.aimGraphics.clear();
       const button = this.skillButtons.get('fireball');
       if (button) {
