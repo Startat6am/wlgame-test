@@ -174,3 +174,10 @@ A phase is complete only when:
 - [x] Keep aim independent of obstacles and walkable areas; server-side projectile collision remains authoritative.
 - [ ] Manually verify continuous pointer tracking and release direction on touch and mouse.
 - Implementation commit: `6d6d871588b07f150c80ba052b7fd0ec508623d1`.
+
+
+## FIRE input freeze investigation — 2026-11-26
+
+- [x] Avoid recalculating the FIRE aim and redrawing its guide on render frames where pointer coordinates are unchanged.
+- [ ] Reproduce and verify FIRE press/hold/drag/release on desktop and mobile; root cause is not yet confirmed.
+- Code commit: `582d3223be96f4df0ee7a43438a9d112b73a9bb1`.
