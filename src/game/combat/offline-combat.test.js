@@ -23,7 +23,8 @@ test('fireball damage reduces health and applies directional knockback', () => {
   assert.equal(hit.dealt, 8);
   assert.equal(hit.killed, false);
   assert.equal(hit.target.health, 92);
-  assert.ok(hit.target.vx > 260);
+  assert.ok(hit.target.vx > 130);
+  assert.ok(hit.target.vx < 260);
   assert.equal(hit.target.vy, 0);
 });
 
