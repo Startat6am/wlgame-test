@@ -165,3 +165,12 @@ A phase is complete only when:
 - [x] Re-sample pointer coordinates on release so projectile direction matches the final joystick direction, including a final movement without a preceding pointermove event.
 - [ ] Manually verify guide-to-projectile alignment on desktop and mobile.
 - Implementation commit: `0b9008132205b6d8330d63e48a6ead6f3a990f60`.
+
+
+## Client-side FIRE aim refresh — 2026-11-26
+
+- [x] Refresh FIRE aim and its guide on each client render frame while the pointer is held.
+- [x] Remove the aim dead zone so every non-zero stick displacement changes direction.
+- [x] Keep aim independent of obstacles and walkable areas; server-side projectile collision remains authoritative.
+- [ ] Manually verify continuous pointer tracking and release direction on touch and mouse.
+- Implementation commit: `6d6d871588b07f150c80ba052b7fd0ec508623d1`.
