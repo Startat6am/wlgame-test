@@ -8,10 +8,9 @@
 - **Active work branch:** `feature/isometric-arena`
 - **PR:** https://github.com/Startat6am/wlgame-test/pull/1 (open, draft; do not merge until manual browser QA is complete).
 - **Base branch:** `main`, base commit at PR creation: `b30dccee049e99af70a9563deccb2f97676183b3`.
-- **Latest functional code commit:** `66a69b3e2c82691786dabc275128f0e507103f63` — reads the explicit WebSocket endpoint from Vite environment configuration.
-- **Latest validation fix:** `85cc36387ba7b55b5deb69229b0cf39400aa01b5` — fixes the WebSocket URL test assertion; this is the tested application branch checkpoint.
-- **Latest roadmap refresh:** `c6a43865ad1114a25ad6c297d1c381f078f2b520` — records handoff workflow, collision progress, WebSocket endpoint configuration, and current verification.
-- **Current handoff checkpoint:** `685ad891f0dc6fa96d4e16b0734ef8b30b54437f` — documents the WebSocket endpoint milestone and latest verified CI/Preview state.
+- **Latest branch HEAD:** `0d3692e647bc0359f18cb917a08110a2dde971bd` — handoff documentation checkpoint; application code is unchanged from the tested WebSocket endpoint implementation.
+- **Latest functional code commit:** `85cc36387ba7b55b5deb69229b0cf39400aa01b5` — WebSocket URL resolver, tests, and Vite client integration.
+- **Latest verification documentation:** being refreshed in this commit; always re-check live GitHub and Vercel state before relying on this snapshot.
 - **Checkpoint date:** 2026-11-25.
 
 The source of truth is the current remote branch. Documentation-only commits can advance HEAD without changing the application-code checkpoint.
@@ -22,10 +21,9 @@ The source of truth is the current remote branch. Documentation-only commits can
 
 - **Workflow:** WLGame CI
 - **Application run:** #53, run ID `45677306557`, SUCCESS on `85cc36387ba7b55b5deb69229b0cf39400aa01b5`.
-- Passed steps: dependency install, `npm run build`, `npm test` (combat, geometry, and network URL tests), and `node --check server/index.js`.
-- Run URL: https://github.com/Startat6am/wlgame-test/actions/runs/45677306557
-- **Latest documentation checkpoint:** run #55, run ID `45677473147`, SUCCESS on `685ad891f0dc6fa96d4e16b0734ef8b30b54437f`.
-- Run URL: https://github.com/Startat6am/wlgame-test/actions/runs/45677473147
+- **Latest CI run:** #56, run ID `45677598511`, SUCCESS on `0d3692e647bc0359f18cb917a08110a2dde971bd`.
+- Passed steps: dependency install, `npm run build`, `npm test` (combat, isometric geometry, and network URL tests), and `node --check server/index.js`.
+- Run URL: https://github.com/Startat6am/wlgame-test/actions/runs/45677598511
 
 ### Vercel
 
@@ -34,12 +32,12 @@ The source of truth is the current remote branch. Documentation-only commits can
 - **Project ID:** `prj_278OZbqZFGgj3fYYfS8aF3laAbhx`
 - **Linked Git repository:** `Startat6am/wlgame-test`
 - **Preview branch:** `feature/isometric-arena`
-- **Preview commit:** `685ad891f0dc6fa96d4e16b0734ef8b30b54437f`
-- **Preview deployment:** `dpl_AkUDeuJqqiWS6tbfrx4Dr1RTM4bo`
+- **Preview commit:** `0d3692e647bc0359f18cb917a08110a2dde971bd`
+- **Preview deployment:** `dpl_2QSz8LT4drGoACSLvriFH8ihUT1f`
 - **Preview state:** READY (verified 2026-11-25).
 - **Preview URL:** https://wlgame-test-git-feature-isometric-arena-callback5.vercel.app
-- **Immutable deployment URL:** https://wlgame-test-c78htt458-callback5.vercel.app
-- **Inspector:** https://vercel.com/callback5/wlgame-test/AkUDeuJqqiWS6tbfrx4Dr1RTM4bo
+- **Immutable deployment URL:** https://wlgame-test-dcz8pma66-callback5.vercel.app
+- **Inspector:** https://vercel.com/callback5/wlgame-test/2QSz8LT4drGoACSLvriFH8ihUT1f
 - Project dashboard: https://vercel.com/callback5/wlgame-test
 
 This confirms a successful Vercel Preview build for the listed commit. It does NOT confirm browser gameplay, mobile behavior, production release, or a running WebSocket backend.
@@ -81,7 +79,7 @@ The new project was created after connecting GitHub Login Connections. The initi
 
 Current package scripts:
 - `npm run build` — `vite build`
-- `npm test` — Node tests under `src/game/combat/*.test.js` and `src/game/geometry/*.test.js`
+- `npm test` — Node tests under `src/game/combat/*.test.js`, `src/game/geometry/*.test.js`, and `src/net/*.test.js`
 - `npm run server` — `node server/index.js`
 
 ## 5. Known gaps — do not mark complete
