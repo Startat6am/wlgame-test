@@ -166,3 +166,12 @@ Do not reconstruct work from chat history until the repository and branch have b
 - **Test:** updated offline combat assertion to confirm the lower impulse. Full CI and latest Preview must be checked against the exact branch HEAD before describing this update as verified.
 - **Manual QA:** user confirmed offline hit registration, HP, knockback, and death work before this adjustment. New knockback scale and aim-guide visibility/angle still need manual confirmation on desktop and mobile.
 - **Next:** verify latest CI/Preview, then ask user to confirm reduced push and the 100px guide; proceed to online host after input UX is accepted.
+
+
+## FIRE aim-stick release correction — 2026-11-26
+
+- Refactored the FIRE joystick aim update into one shared handler used by pointer movement and pointer release.
+- The translucent 100px guide and the joystick icon now derive from the same current pointer offset and screen-to-world direction.
+- On release, the pointer coordinates are sampled again before casting, so the Fireball uses the final release direction even when the browser does not deliver a final pointermove event.
+- Commit: `0b9008132205b6d8330d63e48a6ead6f3a990f60`.
+- Manual desktop/mobile verification remains outstanding; confirm guide alignment and actual projectile trajectory on release.
