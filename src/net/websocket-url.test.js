@@ -30,7 +30,7 @@ test('blank configuration uses the development fallback', () => {
 test('rejects non-WebSocket and malformed configured URLs', () => {
   assert.throws(
     () => resolveWebSocketUrl({ protocol: 'https:', hostname: 'game.example' }, 'https://arena.example'),
-    /must use ws:// or wss:///
+    (error) => error instanceof TypeError && error.message.includes('must use ws:// or wss://')
   );
   assert.throws(
     () => resolveWebSocketUrl({ protocol: 'https:', hostname: 'game.example' }, 'not a URL'),
