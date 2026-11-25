@@ -6,7 +6,7 @@ export const TRAINING_TARGET = Object.freeze({
   radius: 18,
   maxHealth: 100,
   respawnDelayMs: 1800,
-  knockback: 260
+  knockback: 130
 });
 
 export function createTrainingTarget() {
