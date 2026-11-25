@@ -8,9 +8,9 @@
 - **Active work branch:** `feature/isometric-arena`
 - **PR:** https://github.com/Startat6am/wlgame-test/pull/1 (open, draft; do not merge until manual browser QA is complete).
 - **Base branch:** `main`, base commit at PR creation: `b30dccee049e99af70a9563deccb2f97676183b3`.
-- **Latest branch HEAD:** `0d3692e647bc0359f18cb917a08110a2dde971bd` — handoff documentation checkpoint; application code is unchanged from the tested WebSocket endpoint implementation.
-- **Latest functional code commit:** `85cc36387ba7b55b5deb69229b0cf39400aa01b5` — WebSocket URL resolver, tests, and Vite client integration.
-- **Latest verification documentation:** being refreshed in this commit; always re-check live GitHub and Vercel state before relying on this snapshot.
+- **Latest functional code checkpoint:** `c1354b8600dd318c4aecc6c4973dbce0fc374545` — shared immutable arena obstacle geometry used by both client and server, with tests.
+- **Latest roadmap checkpoint:** `d6d1086c4c1e7afba757a8ee1e1f328578adacc7` — records the shared obstacle layout milestone and current CI snapshot.
+- **Current handoff refresh:** documentation-only; verify live branch HEAD after this commit.
 - **Checkpoint date:** 2026-11-25.
 
 The source of truth is the current remote branch. Documentation-only commits can advance HEAD without changing the application-code checkpoint.
@@ -21,9 +21,9 @@ The source of truth is the current remote branch. Documentation-only commits can
 
 - **Workflow:** WLGame CI
 - **Application run:** #53, run ID `45677306557`, SUCCESS on `85cc36387ba7b55b5deb69229b0cf39400aa01b5`.
-- **Latest CI run:** #56, run ID `45677598511`, SUCCESS on `0d3692e647bc0359f18cb917a08110a2dde971bd`.
-- Passed steps: dependency install, `npm run build`, `npm test` (combat, isometric geometry, and network URL tests), and `node --check server/index.js`.
-- Run URL: https://github.com/Startat6am/wlgame-test/actions/runs/45677598511
+- **Latest CI run:** #60, run ID `45683538158`, SUCCESS on `c1354b8600dd318c4aecc6c4973dbce0fc374545`.
+- Passed steps: dependency install, `npm run build`, `npm test` (combat, isometric geometry, shared arena data, and network URL tests), and `node --check server/index.js`.
+- Run URL: https://github.com/Startat6am/wlgame-test/actions/runs/45683538158
 
 ### Vercel
 
@@ -32,12 +32,12 @@ The source of truth is the current remote branch. Documentation-only commits can
 - **Project ID:** `prj_278OZbqZFGgj3fYYfS8aF3laAbhx`
 - **Linked Git repository:** `Startat6am/wlgame-test`
 - **Preview branch:** `feature/isometric-arena`
-- **Preview commit:** `0d3692e647bc0359f18cb917a08110a2dde971bd`
-- **Preview deployment:** `dpl_2QSz8LT4drGoACSLvriFH8ihUT1f`
+- **Preview commit:** `c1354b8600dd318c4aecc6c4973dbce0fc374545`
+- **Preview deployment:** `dpl_9JTHFQKDLv8nfhSFAbHDHFh3s4fh`
 - **Preview state:** READY (verified 2026-11-25).
 - **Preview URL:** https://wlgame-test-git-feature-isometric-arena-callback5.vercel.app
-- **Immutable deployment URL:** https://wlgame-test-dcz8pma66-callback5.vercel.app
-- **Inspector:** https://vercel.com/callback5/wlgame-test/2QSz8LT4drGoACSLvriFH8ihUT1f
+- **Immutable deployment URL:** https://wlgame-test-md9rufxlz-callback5.vercel.app
+- **Inspector:** https://vercel.com/callback5/wlgame-test/9JTHFQKDLv8nfhSFAbHDHFh3s4fh
 - Project dashboard: https://vercel.com/callback5/wlgame-test
 
 This confirms a successful Vercel Preview build for the listed commit. It does NOT confirm browser gameplay, mobile behavior, production release, or a running WebSocket backend.
@@ -61,7 +61,7 @@ The new project was created after connecting GitHub Login Connections. The initi
 - Offline Fireball projectiles now use swept segment/circle checks and disappear on collision with static arena rocks or arena bounds.
 - `NetworkClient.js` accepts `VITE_WS_SERVER_URL` (`ws://` or `wss://`) and validates the configured URL; if unset, it falls back to the current hostname on port 2567.
 - `.env.example` documents the optional endpoint; README explains setting it in the Vercel project environment. Network URL resolution is covered by Node tests.
-- Authoritative server player movement resolves overlap against the same circular arena obstacles; server Fireballs also stop on swept obstacle collision. Shared obstacle coordinates and collision math match the offline scene.
+- Authoritative server player movement resolves overlap against the same circular arena obstacles; server Fireballs also stop on swept obstacle collision. The obstacle list now lives in immutable `src/game/data/arena.js`, imported by both Phaser and server to prevent map geometry drift.
 
 ## 4. Architecture / important files
 
@@ -79,7 +79,7 @@ The new project was created after connecting GitHub Login Connections. The initi
 
 Current package scripts:
 - `npm run build` — `vite build`
-- `npm test` — Node tests under `src/game/combat/*.test.js`, `src/game/geometry/*.test.js`, and `src/net/*.test.js`
+- `npm test` — Node tests under `src/game/combat/*.test.js`, `src/game/geometry/*.test.js`, `src/game/data/*.test.js`, and `src/net/*.test.js`
 - `npm run server` — `node server/index.js`
 
 ## 5. Known gaps — do not mark complete
