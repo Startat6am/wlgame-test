@@ -175,3 +175,13 @@ Do not reconstruct work from chat history until the repository and branch have b
 - On release, the pointer coordinates are sampled again before casting, so the Fireball uses the final release direction even when the browser does not deliver a final pointermove event.
 - Commit: `0b9008132205b6d8330d63e48a6ead6f3a990f60`.
 - Manual desktop/mobile verification remains outstanding; confirm guide alignment and actual projectile trajectory on release.
+
+
+## Client-side FIRE aim refresh — 2026-11-26
+
+- FIRE aim direction now updates on every client render frame while the skill pointer is held, by polling the active Phaser pointer; pointer-move events remain an immediate update path.
+- Removed the 10px aim dead zone: any non-zero pointer offset updates the world-space aim vector; exact center falls back to facing direction.
+- Aim direction is never clamped or redirected by arena bounds or obstacles. Projectile collision remains authoritative and stops the projectile at blocked geometry.
+- The guide is client-rendered and does not wait for server snapshots or the 20Hz network simulation.
+- Commit: `6d6d871588b07f150c80ba052b7fd0ec508623d1`.
+- Manual touch/mouse verification remains outstanding.
