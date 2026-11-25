@@ -41,7 +41,7 @@ This roadmap prioritizes a stable playable core first, then expands gameplay and
 - [x] Move arena obstacle definitions into one immutable shared data module consumed by both Phaser and the authoritative server; test its shape to prevent client/server map drift.
 - [x] Implement an offline training target with swept Fireball hits, health/damage, directional knockback, death, and timed respawn; pure combat lifecycle covered by automated tests. Manual gameplay tuning/verification remains pending.
 - [x] Halve Fireball knockback in both offline and authoritative server combat (260 → 130 base impulse).
-- [x] Show a translucent 100-screen-pixel direction guide from the player while the FIRE button is held; update it during aim-stick drag and clear it on release.
+- [x] Show a translucent 100-screen-pixel direction guide from the player while the FIRE button is held; update it from the same aim-stick vector and sample the exact final pointer position on release before casting.
 - [ ] Add collision tests and gameplay regression tests.
 - [ ] Verify mobile portrait and landscape behavior.
 - [ ] Fix any measured performance regressions before expanding content.
@@ -157,3 +157,11 @@ A phase is complete only when:
 - [x] Add a translucent 100px projected-screen aim guide from the hero while FIRE is pressed; guide follows drag direction and clears when the press is released.
 - [ ] Manually confirm guide visibility/angle on desktop and mobile, plus equal knockback in offline and network matches.
 - Verification pending for latest code commit; see HANDOFF.md for the latest CI/Preview checkpoint.
+
+
+## FIRE aim-stick release correction — 2026-11-26
+
+- [x] Share one aim-vector update path between FIRE joystick movement and release.
+- [x] Re-sample pointer coordinates on release so projectile direction matches the final joystick direction, including a final movement without a preceding pointermove event.
+- [ ] Manually verify guide-to-projectile alignment on desktop and mobile.
+- Implementation commit: `0b9008132205b6d8330d63e48a6ead6f3a990f60`.
