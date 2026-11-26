@@ -67,7 +67,7 @@ This roadmap prioritizes a stable playable core first, then expands gameplay and
 - [x] Support an explicit client WebSocket endpoint through `VITE_WS_SERVER_URL` with a same-host development fallback.
 - [ ] Add rooms, lobby, ready state, match lifecycle, and disconnect handling.
 - [x] Add a 1 KB WebSocket payload cap, per-player input/cast rate limits, and snapshot backpressure protection (skip stale snapshots above 64 KB queued).
-- [ ] Add malformed-message, abusive-client, and slow-client integration tests; define disconnect policy.
+- [x] Extract WebSocket protocol parsing and rate limits into pure unit-testable functions; test malformed/oversized/invalid payloads, input/cast floods, and slow-client backpressure policy. Disconnect after >256 KiB queued for 40 consecutive ticks (2 seconds). [ ] Add live WebSocket integration and load tests.
 - [ ] Load-test multiple concurrent matches.
 - [ ] Measure latency, jitter, snapshot bandwidth, and server event-loop lag.
 
@@ -223,3 +223,13 @@ A phase is complete only when:
 - Added five deterministic tests for interpolation, buffer edges, duplicate/out-of-order timestamps, capacity, and malformed samples.
 - Local verification in the isolated Node workspace: npm test passed 45/45 and npm run build succeeded. GitHub Actions WLGame CI run #100 (ID 45765989025) passed on code HEAD 71d023624ad4f6ac1c3c29b79c10695b4b02d8d8; Vercel Preview deployment dpl_2s45a3WV3zCu4hHUVnxq4HyJFr3u is READY for that exact SHA. Vite's existing large-chunk warning remains (~1.51 MB minified / 350 KB gzip).
 - Manual two-client latency/jitter tuning remains open; 100 ms is an initial render buffer, not a measured optimum.
+
+
+## WebSocket protocol and slow-client protection — 2026-11-26
+
+- Extracted client message parsing/validation and per-player input/cast rate limits into src/net/websocket-protocol.js.
+- Malformed JSON, oversized payloads, unknown messages, non-finite values, and messages above configured per-player rates are ignored.
+- Snapshot delivery skips clients above 64 KiB buffered. A client above 256 KiB for 40 consecutive 20 Hz ticks (2 seconds) is closed with WebSocket code 1013; the streak resets as soon as the queue drains below the critical threshold.
+- Added seven deterministic unit tests covering protocol validation, flood limits, skip threshold, disconnect threshold, recovery, and invalid backpressure values.
+- Live WebSocket integration tests and concurrent-client load tests remain open; unit tests do not prove behavior under real network congestion.
+- Local verification: npm test passed 52/52, npm run build succeeded, node --check server/index.js succeeded, and git diff --check succeeded. Vite's known large-chunk warning remains.
