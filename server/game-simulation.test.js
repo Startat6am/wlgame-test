@@ -48,6 +48,7 @@ test('simulation validates casts, applies cooldown, and removes owned projectile
 test('simulation state round-trips for a future leader failover', () => {
   const original = createSimulation();
   const player = original.addPlayer(null, 'stable-player-id');
+  original.addPlayer(null, 'uncast-player-id');
   original.handleMessage(player, JSON.stringify({ type: 'input', x: 0.5, y: -0.5 }), 1000);
   original.handleMessage(player, JSON.stringify({ type: 'cast', ability: 'fireball', angle: 1.25 }), 1000);
   original.step(1050);
