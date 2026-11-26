@@ -11,7 +11,7 @@
 - **Latest functional code checkpoint:** `c1354b8600dd318c4aecc6c4973dbce0fc374545` — shared immutable arena obstacle geometry used by both client and server, with tests.
 - **Latest roadmap checkpoint:** `d6d1086c4c1e7afba757a8ee1e1f328578adacc7` — records the shared obstacle layout milestone and current CI snapshot.
 - **Current handoff refresh:** documentation-only; verify live branch HEAD after this commit.
-- **Checkpoint date:** 2026-11-25.
+- **Checkpoint date:** 2026-11-26.
 
 The source of truth is the current remote branch. Documentation-only commits can advance HEAD without changing the application-code checkpoint.
 
@@ -232,3 +232,14 @@ Do not reconstruct work from chat history until the repository and branch have b
 - Fixed-window limiter is isolated in `src/net/rate-limit.js` with deterministic unit tests. Fireball's 1.4-second server cooldown remains the gameplay authority.
 - This prevents oversized frames, excessive inbound message processing, and growing outbound snapshot queues. It does not yet disconnect slow clients or provide integration/load testing.
 - Verification and deployment for this change pending.
+
+
+## Remote-player interpolation — 2026-11-26
+
+- Added src/net/remote-interpolation.js: bounded (8-sample) per-player receive-time buffer and linear interpolation of world position/facing.
+- ArenaScene.applySnapshot records remote-player samples; ArenaScene.update renders them 100 ms behind the latest local receive time. This smooths the remote presentation between 20 Hz snapshots without predicting or changing server-authoritative movement/collision.
+- Remote-player health still updates immediately from snapshots. Actors are removed when absent from a snapshot as before.
+- Added five tests in src/net/remote-interpolation.test.js.
+- Local verification in the isolated Node workspace: npm test passed 45/45, npm run build succeeded, node --check server/index.js succeeded, and git diff --check succeeded. Vite reports the known non-fatal large-chunk warning (~1.51 MB minified / 350 KB gzip).
+- GitHub CI and Preview status are pending until the change is pushed. No browser or two-client gameplay QA has been performed. The 100 ms buffer is an initial tuning value; verify perceived latency/jitter with two clients before treating it as final.
+- Previous verified Preview checkpoint b9ca7f2c27b8c3c32e4b7cec30eb72779aa38c8e is READY at https://wlgame-test-32be2e91h-callback5.vercel.app; branch alias https://wlgame-test-git-feature-isometric-arena-callback5.vercel.app.
