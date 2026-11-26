@@ -156,7 +156,10 @@ export class GameSimulation {
   serializeState() {
     return {
       version: 1,
-      players: [...this.players.values()].map(({ socket, ...player }) => ({ ...player })),
+      players: [...this.players.values()].map(({ socket, ...player }) => ({
+        ...player,
+        lastFireballAt: Number.isFinite(player.lastFireballAt) ? player.lastFireballAt : null
+      })),
       projectiles: [...this.projectiles.values()].map(({ hitIds, ...projectile }) => ({
         ...projectile,
         hitIds: [...hitIds]
@@ -172,12 +175,13 @@ export class GameSimulation {
     for (const player of state.players) {
       if (!player || typeof player.id !== 'string' ||
           ![player.x, player.y, player.inputX, player.inputY, player.facingX, player.facingY,
-            player.vx, player.vy, player.health, player.maxHealth, player.damagePoints,
-            player.lastFireballAt].every(Number.isFinite)) {
+            player.vx, player.vy, player.health, player.maxHealth, player.damagePoints].every(Number.isFinite) ||
+          (player.lastFireballAt !== null && !Number.isFinite(player.lastFireballAt))) {
         throw new TypeError('state contains an invalid player');
       }
       players.set(player.id, {
         ...player,
+        lastFireballAt: Number.isFinite(player.lastFireballAt) ? player.lastFireballAt : -Infinity,
         socket: null,
         inputRate: player.inputRate && typeof player.inputRate === 'object' ? player.inputRate : {},
         castRate: player.castRate && typeof player.castRate === 'object' ? player.castRate : {}
