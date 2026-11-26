@@ -1,4 +1,4 @@
-import { applyDamage, calculateKnockback, resolveCircleCollision } from './combat-math.js';
+import { applyDamage, calculateKnockback, resolveCircleAgainstArena } from './combat-math.js';
 
 export const TRAINING_TARGET = Object.freeze({
   x: 800,
@@ -62,14 +62,9 @@ export function updateTrainingTarget(target, deltaMs, nowMs, world, obstacles = 
 
   const dt = Math.min(deltaMs, 100) / 1000;
   const damping = Math.pow(0.12, dt);
-  let x = Math.max(target.radius, Math.min(world.width - target.radius, target.x + target.vx * dt));
-  let y = Math.max(target.radius, Math.min(world.height - target.radius, target.y + target.vy * dt));
-  for (let pass = 0; pass < 2; pass += 1) {
-    for (const obstacle of obstacles) {
-      const resolved = resolveCircleCollision(x, y, target.radius, obstacle.x, obstacle.y, obstacle.radius);
-      x = resolved.x;
-      y = resolved.y;
-    }
-  }
+  const resolved = resolveCircleAgainstArena(
+    target.x + target.vx * dt, target.y + target.vy * dt, target.radius, world, obstacles
+  );
+  const { x, y } = resolved;
   return { ...target, x, y, vx: target.vx * damping, vy: target.vy * damping };
 }
