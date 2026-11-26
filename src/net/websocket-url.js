@@ -15,6 +15,8 @@ export function resolveWebSocketUrl(location, configuredUrl = '') {
   if (!location || typeof location.hostname !== 'string' || typeof location.protocol !== 'string') {
     throw new TypeError('A browser location with protocol and hostname is required');
   }
-  const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-  return `${protocol}//${location.hostname}:2567`;
+  if (location.protocol === 'https:') {
+    return `wss://${location.host || location.hostname}/api/ws`;
+  }
+  return `ws://${location.hostname}:2567`;
 }
