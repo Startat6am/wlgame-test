@@ -25,6 +25,7 @@ const COMMIT_TICK_SCRIPT = `
 if redis.call('GET', KEYS[1]) ~= ARGV[1] then return 0 end
 redis.call('SET', KEYS[2], ARGV[2], 'EX', ARGV[3])
 redis.call('PUBLISH', KEYS[3], ARGV[4])
+redis.call('XTRIM', KEYS[4], 'MINID', '~', ARGV[5])
 return 1
 `;
 
@@ -136,9 +137,9 @@ export class RedisRoomCoordinator {
   async commitTick(roomId, token, state, event) {
     const keys = this.keys(roomId);
     const result = await this.redis.command([
-      'EVAL', COMMIT_TICK_SCRIPT, '3',
-      keys.lease, keys.state, keys.channel,
-      token, JSON.stringify(state), String(this.stateTtlSeconds), JSON.stringify(event)
+      'EVAL', COMMIT_TICK_SCRIPT, '4',
+      keys.lease, keys.state, keys.channel, keys.inputStream,
+      token, JSON.stringify(state), String(this.stateTtlSeconds), JSON.stringify(event), state.lastEventId || '0-0'
     ]);
     return result === 1;
   }
