@@ -54,3 +54,18 @@ test('prediction clamps to arena bounds and caps long frame deltas', () => {
   );
   assert.equal(result.x, 985);
 });
+
+
+test('delayed server corrections do not perturb movement while input is held', () => {
+  const state = createLocalPredictionState();
+  state.initialized = true;
+  state.correctionX = -18;
+  state.correctionY = 0;
+  const result = stepLocalPrediction(
+    state, { x: 500, y: 500 }, { x: 1, y: 0 }, 50,
+    options, resolveCircleAgainstArena
+  );
+  assert.ok(Math.abs(result.x - 511.5) < 0.001);
+  assert.equal(result.y, 500);
+  assert.equal(state.correctionX, -18);
+});
