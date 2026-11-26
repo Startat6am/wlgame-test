@@ -66,7 +66,8 @@ This roadmap prioritizes a stable playable core first, then expands gameplay and
 - [ ] Deploy the Node.js WebSocket server on persistent hosting separate from Vercel.
 - [x] Support an explicit client WebSocket endpoint through `VITE_WS_SERVER_URL` with a same-host development fallback.
 - [ ] Add rooms, lobby, ready state, match lifecycle, and disconnect handling.
-- [ ] Harden server validation, rate limits, and slow-client handling.
+- [x] Add a 1 KB WebSocket payload cap, per-player input/cast rate limits, and snapshot backpressure protection (skip stale snapshots above 64 KB queued).
+- [ ] Add malformed-message, abusive-client, and slow-client integration tests; define disconnect policy.
 - [ ] Load-test multiple concurrent matches.
 - [ ] Measure latency, jitter, snapshot bandwidth, and server event-loop lag.
 
@@ -204,3 +205,12 @@ A phase is complete only when:
 - Added tests for world boundaries, unobstructed tangential movement, a corner between overlapping rocks, and invalid world dimensions.
 - Local verification: `npm test` passed 36/36; `npm run build` succeeded; `node --check server/index.js` succeeded. Vite still reports the known non-fatal large JavaScript chunk warning (~1.51 MB minified / 349 KB gzip).
 - Automated tests do not replace live browser/two-client gameplay QA.
+
+
+## WebSocket load protection — 2026-11-26
+
+- Limited inbound WebSocket payloads to 1 KB at the protocol layer.
+- Added per-player fixed-window limits: 30 movement input messages/sec and 3 cast messages/sec (Fireball cooldown remains authoritative).
+- Snapshot broadcasts now skip clients with more than 64 KB queued, avoiding unbounded stale-snapshot backlog.
+- Added deterministic unit tests for limiter thresholds, exact window reset, clock rollback, and invalid configuration.
+- Integration tests and an explicit slow-client disconnect policy remain open.
