@@ -6,6 +6,7 @@ import { WORLD, ISO_VIEW, worldToScreen, screenToWorld, screenVectorToWorld, pro
 import { segmentIntersectsCircle } from '../combat/combat-math.js';
 import { ARENA_OBSTACLES } from '../data/arena.js';
 import { createTrainingTarget, hitTrainingTarget, updateTrainingTarget } from '../combat/offline-combat.js';
+import { createFrameTimeHistory, recordFrameTime, getFrameTimeStats } from '../performance/frame-time.js';
 
 const SPEED = balance.baseline.movementSpeed.value;
 const FIREBALL = balance.abilities.find((ability) => ability.id === 'fireball');
@@ -25,6 +26,7 @@ export class ArenaScene extends Phaser.Scene {
     this.lastSkillPointerPosition = null;
     this.localProjectiles = [];
     this.nextFpsUpdate = 0;
+    this.frameTimeHistory = createFrameTimeHistory(120);
     this.networkInputAccumulator = 0;
   }
 
@@ -519,6 +521,7 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   update(_time, delta) {
+    recordFrameTime(this.frameTimeHistory, delta);
     // FIRE aim is updated from local pointer events; do not poll/redraw every frame.
     // Release samples the final pointer coordinates before casting.
     if (this.trainingTarget && !this.network.connected) {
@@ -528,7 +531,11 @@ export class ArenaScene extends Phaser.Scene {
     this.updateLocalProjectiles(delta);
     if (this.time.now >= this.nextFpsUpdate) {
       const actualFps = this.game.loop.actualFps;
-      this.fpsLabel.setText(`FPS: ${Number.isFinite(actualFps) ? Math.round(actualFps) : '--'}`);
+      const frameStats = getFrameTimeStats(this.frameTimeHistory);
+      const fps = Number.isFinite(actualFps) ? Math.round(actualFps) : '--';
+      this.fpsLabel.setText(frameStats
+        ? `FPS: ${fps} · p95 ${frameStats.p95.toFixed(1)} · p99 ${frameStats.p99.toFixed(1)} ms`
+        : `FPS: ${fps}`);
       this.fpsLabel.setPosition(this.scale.width - 18, 14);
       this.nextFpsUpdate = this.time.now + 250;
     }
