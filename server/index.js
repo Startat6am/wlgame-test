@@ -2,6 +2,7 @@ import { WebSocketServer } from 'ws';
 import { randomUUID } from 'node:crypto';
 import { resolveCircleAgainstArena, segmentIntersectsCircle } from '../src/game/combat/combat-math.js';
 import { ARENA_OBSTACLES } from '../src/game/data/arena.js';
+import { consumeRateLimit } from '../src/net/rate-limit.js';
 
 const PORT = Number(process.env.PORT ?? 2567);
 const TICK_RATE = 20;
@@ -13,7 +14,8 @@ const OBSTACLES = ARENA_OBSTACLES.map(({ x, y, radius }) => [x, y, radius]);
 const OBSTACLE_CIRCLES = ARENA_OBSTACLES;
 const players = new Map();
 const projectiles = new Map();
-const server = new WebSocketServer({ port: PORT });
+const server = new WebSocketServer({ port: PORT, maxPayload: 1024 });
+const SNAPSHOT_BACKPRESSURE_LIMIT = 64 * 1024;
 
 function sendSnapshot() {
   const payload = JSON.stringify({
@@ -24,7 +26,10 @@ function sendSnapshot() {
     projectiles: [...projectiles.values()].map(({ id, x, y }) => ({ id, x, y }))
   });
   for (const client of server.clients) {
-    if (client.readyState === 1) client.send(payload);
+    if (client.readyState !== 1) continue;
+    // Drop an obsolete snapshot rather than queueing an ever-growing backlog.
+    if (client.bufferedAmount > SNAPSHOT_BACKPRESSURE_LIMIT) continue;
+    client.send(payload);
   }
 }
 
@@ -42,7 +47,9 @@ server.on('connection', (socket) => {
     facingX: 0, facingY: -1,
     vx: 0, vy: 0,
     health: 100, maxHealth: 100, damagePoints: 0,
-    lastFireballAt: -Infinity
+    lastFireballAt: -Infinity,
+    inputRate: {},
+    castRate: {}
   };
   players.set(id, player);
   socket.send(JSON.stringify({ type: 'welcome', id }));
@@ -53,6 +60,7 @@ server.on('connection', (socket) => {
     try { message = JSON.parse(raw.toString()); } catch { return; }
 
     if (message.type === 'input') {
+      if (!consumeRateLimit(player.inputRate, Date.now(), 30, 1000)) return;
       const x = Number(message.x);
       const y = Number(message.y);
       if (!Number.isFinite(x) || !Number.isFinite(y)) return;
@@ -68,6 +76,7 @@ server.on('connection', (socket) => {
     }
 
     if (message.type === 'cast' && message.ability === 'fireball') {
+      if (!consumeRateLimit(player.castRate, Date.now(), 3, 1000)) return;
       const angle = Number(message.angle);
       const now = Date.now();
       if (!Number.isFinite(angle) || now - player.lastFireballAt < FIREBALL.cooldownMs) return;
