@@ -224,3 +224,11 @@ Do not reconstruct work from chat history until the repository and branch have b
 - Added four regression tests: arena boundary clamp, tangential movement along an obstacle edge, resolution of a corner formed by overlapping obstacles, and invalid world dimensions.
 - Local verification in a clean ephemeral Node box: `npm test` passed 36/36, `npm run build` succeeded, and `node --check server/index.js` succeeded. Known Vite large-chunk warning remains (~1.51 MB minified / 349 KB gzip).
 - Commit/CI/Preview verification pending. Manual browser and two-client collision checks remain required; PR #1 remains Draft.
+
+
+## WebSocket load protection — 2026-11-26
+
+- `server/index.js` now configures `ws` with `maxPayload: 1024`, rate-limits each player's input stream to 30 messages/sec and Fireball casts to 3/sec, and skips snapshot sends when a client's `bufferedAmount` exceeds 64 KiB.
+- Fixed-window limiter is isolated in `src/net/rate-limit.js` with deterministic unit tests. Fireball's 1.4-second server cooldown remains the gameplay authority.
+- This prevents oversized frames, excessive inbound message processing, and growing outbound snapshot queues. It does not yet disconnect slow clients or provide integration/load testing.
+- Verification and deployment for this change pending.
