@@ -82,7 +82,7 @@ export class UpstashRedisRest {
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
-        buffer += decoder.decode(value, { stream: true });
+        buffer = (buffer + decoder.decode(value, { stream: true })).replace(/\r\n/g, '\n');
         let boundary;
         while ((boundary = buffer.indexOf('\n\n')) >= 0) {
           const frame = buffer.slice(0, boundary).replace(/\r/g, '');
