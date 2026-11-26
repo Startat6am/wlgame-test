@@ -297,3 +297,12 @@ A phase is complete only when:
 - Added client-side local movement prediction at render-frame cadence using the same arena circle resolver as the server, plus a 100 ms exponential reconciliation toward authoritative snapshots. First authoritative snapshot seeds the spawn position; reconnect welcome resets prediction initialization.
 - Added deterministic unit coverage for spawn seeding, per-frame movement, smooth correction, bounds, and long-frame delta capping.
 - Next gate: run CI/build, then single-client Preview movement test and inspect p95/p99 frame time. Do not start two-player or cross-instance testing until this gate passes.
+
+
+## Local movement jitter follow-up — 2026-11-26
+
+- [x] Confirmed the user report is movement-position jitter, not low FPS; retain single-player smoothness as the only current gameplay gate.
+- [x] Disable the hidden Arcade physics body while online so it cannot compete with render-frame local prediction and manual arena collision resolution; restore Arcade physics when returning to offline mode.
+- [x] Local verification: `npm test` passed 80/80 and `npm run build` succeeded (known non-fatal Vite chunk warning remains).
+- [ ] Verify CI and wait for the Preview deployment of commit `146185d74b3a381849259562126d164dae0a1d95` to reach READY.
+- [ ] Manually test one character moving continuously and around obstacles; inspect p95/p99. Do not start two-player testing until single-player movement is confirmed smooth.
