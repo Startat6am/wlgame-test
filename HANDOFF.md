@@ -196,3 +196,5 @@ Do not reconstruct work from chat history until the repository and branch have b
 - Next: verify CI and Preview for this code commit, then reproduce FIRE press/hold/drag/release in desktop and mobile browsers. If the freeze persists, capture browser console/performance traces and inspect Phaser pointer lifecycle and scene update cost.
 
 - Follow-up after user reported the first optimization still froze the browser: removed the per-render-frame Phaser pointer-array polling entirely. Aim now updates from local `pointermove` events and samples final coordinates on `pointerup`; no per-frame aim work occurs. Commit: `deb3dac125da76a29b3c52a5c7d222521e4c9535`. Still requires manual reproduction/verification.
+
+- FIRE guide anchoring fix: while FIRE is held, the guide is redrawn only when the hero's world position changes, preserving the current aim vector. This keeps the 100px guide attached to the moving hero when strafing around an obstacle without reintroducing per-frame pointer polling. Commit `20115b9170ff6db7c4dde5deef14f8ea501374f4`; manual QA pending.
