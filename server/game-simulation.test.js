@@ -44,3 +44,26 @@ test('simulation validates casts, applies cooldown, and removes owned projectile
   assert.equal(simulation.players.has(player.id), false);
   assert.equal(simulation.projectiles.size, 0);
 });
+
+test('simulation state round-trips for a future leader failover', () => {
+  const original = createSimulation();
+  const player = original.addPlayer(null, 'stable-player-id');
+  original.handleMessage(player, JSON.stringify({ type: 'input', x: 0.5, y: -0.5 }), 1000);
+  original.handleMessage(player, JSON.stringify({ type: 'cast', ability: 'fireball', angle: 1.25 }), 1000);
+  original.step(1050);
+
+  const restored = createSimulation();
+  restored.restoreState(JSON.parse(JSON.stringify(original.serializeState())));
+  assert.deepEqual(restored.createSnapshot(), original.createSnapshot());
+  assert.equal(restored.projectiles.size, original.projectiles.size);
+  assert.ok(restored.players.get(player.id));
+  assert.equal(restored.players.get(player.id).socket, null);
+  assert.ok(restored.projectiles.values().next().value.hitIds instanceof Set);
+});
+
+test('simulation state restore rejects malformed snapshots without replacing current state', () => {
+  const simulation = createSimulation();
+  const player = simulation.addPlayer(null, 'existing');
+  assert.throws(() => simulation.restoreState({ version: 1, players: [{ id: 'bad' }], projectiles: [] }), TypeError);
+  assert.equal(simulation.players.get(player.id), player);
+});
