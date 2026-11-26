@@ -47,7 +47,7 @@ test('state commits are fenced by the current lease token and include snapshot p
   assert.equal(command[0], 'EVAL');
   assert.equal(command[3], 'wlgame:room:arena:lease');
   assert.equal(command[4], 'wlgame:room:arena:state');
-  assert.equal(command[5], 'wlgame:room:arena:events');
+  assert.equal(command[5], 'wlgame:room:arena:snapshots');
   assert.equal(JSON.parse(command[7]).version, 1);
   assert.deepEqual(JSON.parse(command[9]), event);
 });
@@ -67,4 +67,35 @@ test('rejects invalid room identifiers and malformed persisted state', async () 
   assert.throws(() => coordinator.keys('../unsafe'), TypeError);
   await assert.rejects(coordinator.loadState('arena'), TypeError);
   await assert.rejects(coordinator.acquireLease('arena', ''), TypeError);
+});
+
+test('appends durable room events and reads them in stream order', async () => {
+  const streamResult = [[
+    'wlgame:room:arena:inputs',
+    [
+      ['100-0', ['event', '{"type":"join","playerId":"p1"}']],
+      ['101-0', ['event', '{"type":"input","playerId":"p1","raw":"{}"}']]
+    ]
+  ]];
+  const redis = fakeRedis(['102-0', streamResult]);
+  const coordinator = new RedisRoomCoordinator(redis);
+  assert.equal(await coordinator.appendEvent('arena', { type: 'join', playerId: 'p1' }), '102-0');
+  const events = await coordinator.readEvents('arena', '99-0', 20);
+  assert.deepEqual(events, [
+    { id: '100-0', event: { type: 'join', playerId: 'p1' } },
+    { id: '101-0', event: { type: 'input', playerId: 'p1', raw: '{}' } }
+  ]);
+  assert.deepEqual(redis.calls[0], [
+    'XADD', 'wlgame:room:arena:inputs', '*', 'event',
+    JSON.stringify({ type: 'join', playerId: 'p1' })
+  ]);
+  assert.deepEqual(redis.calls[1].slice(0, 6), [
+    'XREAD', 'COUNT', '20', 'STREAMS', 'wlgame:room:arena:inputs', '99-0'
+  ]);
+});
+
+test('validates stream cursors and batch sizes', async () => {
+  const coordinator = new RedisRoomCoordinator(fakeRedis([null]));
+  await assert.rejects(coordinator.readEvents('arena', 'bad-id'), TypeError);
+  await assert.rejects(coordinator.readEvents('arena', '0-0', 501), TypeError);
 });
