@@ -321,6 +321,7 @@ export class ArenaScene extends Phaser.Scene {
 
   drawFireballGuide(direction) {
     this.aimGraphics.clear();
+    this.lastFireballGuideHeroPosition = { x: this.hero.x, y: this.hero.y };
     const origin = worldToScreen(this.hero.x, this.hero.y);
     const projected = worldToScreen(this.hero.x + direction.x, this.hero.y + direction.y);
     const dx = projected.x - origin.x;
@@ -564,6 +565,16 @@ export class ArenaScene extends Phaser.Scene {
     const heroScreen = worldToScreen(this.hero.x, this.hero.y);
     this.heroVisual.setPosition(heroScreen.x, heroScreen.y).setDepth(heroScreen.y + 1);
     this.heroLabel.setPosition(heroScreen.x, heroScreen.y - 46).setDepth(heroScreen.y + 2);
+    if (this.skillButtonPointerId !== null && this.skillButtonOrigin) {
+      const guidePosition = this.lastFireballGuideHeroPosition;
+      if (!guidePosition || guidePosition.x !== this.hero.x || guidePosition.y !== this.hero.y) {
+        const direction = this.skillButtonAim ?? {
+          x: Math.cos(this.hero.rotation - Math.PI / 2),
+          y: Math.sin(this.hero.rotation - Math.PI / 2)
+        };
+        this.drawFireballGuide(direction);
+      }
+    }
     this.touch.update();
   }
 }
