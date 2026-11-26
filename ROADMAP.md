@@ -181,3 +181,5 @@ A phase is complete only when:
 - [x] Avoid recalculating the FIRE aim and redrawing its guide on render frames where pointer coordinates are unchanged.
 - [ ] Reproduce and verify FIRE press/hold/drag/release on desktop and mobile; root cause is not yet confirmed.
 - Code commit: `582d3223be96f4df0ee7a43438a9d112b73a9bb1`.
+
+- Follow-up: removed per-frame FIRE pointer polling after browser-freeze report; event-driven client aim and release resampling remain. Commit `deb3dac125da76a29b3c52a5c7d222521e4c9535`. Manual QA still pending.
