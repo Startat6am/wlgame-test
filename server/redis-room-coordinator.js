@@ -57,7 +57,8 @@ export class RedisRoomCoordinator {
       lease: `${base}:lease`,
       epoch: `${base}:epoch`,
       state: `${base}:state`,
-      channel: `${base}:events`
+      channel: `${base}:snapshots`,
+      inputStream: `${base}:inputs`
     };
   }
 
@@ -99,6 +100,37 @@ export class RedisRoomCoordinator {
       throw new TypeError('stored room state has an unsupported shape');
     }
     return state;
+  }
+
+  async appendEvent(roomId, event) {
+    const keys = this.keys(roomId);
+    return this.redis.command([
+      'XADD', keys.inputStream, '*', 'event', JSON.stringify(event)
+    ]);
+  }
+
+  async readEvents(roomId, lastEventId = '0-0', count = 100) {
+    const keys = this.keys(roomId);
+    if (typeof lastEventId !== 'string' || !/^\d+-\d+$/.test(lastEventId)) {
+      throw new TypeError('lastEventId must be a Redis stream ID');
+    }
+    if (!Number.isInteger(count) || count < 1 || count > 500) {
+      throw new TypeError('count must be an integer between 1 and 500');
+    }
+    const result = await this.redis.command([
+      'XREAD', 'COUNT', String(count), 'STREAMS', keys.inputStream, lastEventId
+    ]);
+    const entries = Array.isArray(result?.[0]?.[1]) ? result[0][1] : [];
+    return entries.map(([id, fields]) => {
+      if (typeof id !== 'string' || !Array.isArray(fields)) return null;
+      const eventIndex = fields.indexOf('event');
+      if (eventIndex < 0 || typeof fields[eventIndex + 1] !== 'string') return null;
+      try {
+        return { id, event: JSON.parse(fields[eventIndex + 1]) };
+      } catch {
+        return null;
+      }
+    }).filter(Boolean);
   }
 
   async commitTick(roomId, token, state, event) {
