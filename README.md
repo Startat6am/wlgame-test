@@ -7,7 +7,7 @@ Browser-based 2D arena prototype inspired by the mechanics of Warcraft III custo
 - Phaser 3 isometric arena prototype with keyboard and touch controls.
 - Offline training target and authoritative WebSocket combat simulation.
 - Node.js WebSocket transport for local development.
-- Vercel Functions WebSocket migration in progress; cross-instance room coordination is the next infrastructure milestone.
+- Vercel WebSocket Function + Upstash Redis room coordinator implemented; live multi-instance gameplay validation remains.
 
 > This is a technical foundation, not a recreation of the original map's complete balance or content. Original Warlock Arena 0.88 mechanics still need to be documented from a reliable map/version reference before implementing heroes, spells, items, and progression.
 
@@ -43,7 +43,7 @@ Vercel Functions now support native WebSocket connections. The target architectu
 
 Vercel pins each WebSocket connection to one Function instance and closes it at the Function's maximum duration. The client now reconnects with bounded exponential backoff. Because different players can land on different instances, instance-local memory alone is not a valid multiplayer state store.
 
-**Migration status:** simulation extraction, client reconnect support, the Vercel `/api/ws` Function entrypoint, and a Redis-backed room runtime/coordinator are implemented with unit tests. The endpoint is configured for Vercel's Stockholm Function region (`arn1`) with a 300-second maximum duration. The endpoint remains inactive until `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, and `VITE_WS_SERVER_URL=/api/ws` are configured. The nearest currently documented Upstash AWS primary region is Frankfurt (`eu-central-1`). The Redis runtime uses a durable input stream, a fenced single-writer lease with epochs, recoverable simulation snapshots, and Pub/Sub SSE fan-out for tick snapshots. No Redis database is currently connected to this project; do not claim deployed multiplayer until the secrets are configured and a real two-client test passes.
+**Migration status:** simulation extraction, client reconnect support, the Vercel `/api/ws` Function, and Redis-backed room runtime are implemented. A free Upstash database is provisioned in Frankfurt (`eu-central-1`), and its server-only secrets plus `VITE_WS_SERVER_URL=/api/ws` are configured in Vercel Preview for `feature/isometric-arena` only. Vercel Functions are configured for Stockholm (`arn1`) with a 300-second maximum duration. Live checks have verified Redis lease acquisition, stream append/read, and fenced tick-state commit; Pub/Sub SSE and two-client cross-instance gameplay still need end-to-end verification. Production environment variables and aliases have not been changed.
 
 For Vercel Preview/Production, set `VITE_WS_SERVER_URL=/api/ws`. For a separate development server, set it to an explicit `ws://` or `wss://` URL. See `.env.example`.
 
@@ -56,7 +56,7 @@ For Vercel Preview/Production, set `VITE_WS_SERVER_URL=/api/ws`. For a separate 
 ## Project layout
 
 ```text
-api/                  # planned Vercel Function entrypoints
+api/ws.js             # Vercel WebSocket Function entrypoint
 server/
   game-simulation.js  # authoritative simulation, independent of transport
   index.js            # local Node.js WebSocket adapter
@@ -71,7 +71,7 @@ src/
 - The client sends normalized movement intent, not trusted world coordinates.
 - The authoritative simulation validates input, resolves movement and projectile collision, and produces snapshots.
 - Network simulation runs at 20 Hz; remote actors are interpolated client-side between snapshots.
-- The Vercel adapter must use shared coordination/state across Function instances before it is considered multiplayer-ready.
+- The Vercel adapter uses Redis-backed shared coordination/state; it is not multiplayer-ready until live SSE fan-out and two-client cross-instance gameplay are verified.
 - PostgreSQL persistence, accounts, matchmaking, bots, heroes, abilities, and items remain separate roadmap work.
 
 ## Scripts
