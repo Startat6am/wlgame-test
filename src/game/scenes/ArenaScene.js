@@ -3,11 +3,12 @@ import balance from '../data/ability-balance.json';
 import { TouchControls } from '../input/TouchControls.js';
 import { NetworkClient } from '../../net/NetworkClient.js';
 import { WORLD, ISO_VIEW, worldToScreen, screenToWorld, screenVectorToWorld, projectedAngle } from '../geometry/isometric.js';
-import { segmentIntersectsCircle } from '../combat/combat-math.js';
+import { resolveCircleAgainstArena, segmentIntersectsCircle } from '../combat/combat-math.js';
 import { ARENA_OBSTACLES } from '../data/arena.js';
 import { createTrainingTarget, hitTrainingTarget, updateTrainingTarget } from '../combat/offline-combat.js';
 import { createFrameTimeHistory, recordFrameTime, getFrameTimeStats } from '../performance/frame-time.js';
 import { createRemoteInterpolationBuffer, pushRemotePlayerSample, sampleRemotePlayer, REMOTE_INTERPOLATION_DELAY_MS } from '../../net/remote-interpolation.js';
+import { createLocalPredictionState, reconcileLocalPrediction, stepLocalPrediction } from '../../net/local-prediction.js';
 
 const SPEED = balance.baseline.movementSpeed.value;
 const FIREBALL = balance.abilities.find((ability) => ability.id === 'fireball');
@@ -29,6 +30,7 @@ export class ArenaScene extends Phaser.Scene {
     this.nextFpsUpdate = 0;
     this.frameTimeHistory = createFrameTimeHistory(120);
     this.networkInputAccumulator = 0;
+    this.localPrediction = createLocalPredictionState();
   }
 
   create() {
@@ -46,7 +48,7 @@ export class ArenaScene extends Phaser.Scene {
     this.network = new NetworkClient(
       (snapshot) => this.applySnapshot(snapshot),
       (status) => this.setConnectionStatus(status),
-      null,
+      () => { this.localPrediction.initialized = false; },
       (event) => this.handleCombatEvent(event)
     );
     this.network.connect();
@@ -217,7 +219,6 @@ export class ArenaScene extends Phaser.Scene {
     }
     this.aimGraphics.clear();
   }
-
   isOverSkillButton(pointer) {
     const x = this.scale.width - 62;
     const y = this.scale.height - (this.scale.height > this.scale.width ? 104 : 82);
@@ -369,10 +370,8 @@ export class ArenaScene extends Phaser.Scene {
     const seenPlayers = new Set();
     for (const player of players) {
       if (player.id === this.network.playerId) {
-        this.hero.setPosition(player.x, player.y);
-        const heroScreen = worldToScreen(player.x, player.y);
-        this.heroVisual?.setPosition(heroScreen.x, heroScreen.y).setDepth(heroScreen.y + 1);
-        this.heroLabel?.setPosition(heroScreen.x, heroScreen.y - 46).setDepth(heroScreen.y + 2);
+        const reconciled = reconcileLocalPrediction(this.localPrediction, this.hero, player);
+        if (reconciled) this.hero.setPosition(reconciled.x, reconciled.y);
         if (Number.isFinite(player.facingX) && Number.isFinite(player.facingY) &&
             (player.facingX || player.facingY)) {
           this.hero.rotation = Math.atan2(player.facingY, player.facingX) + Math.PI / 2;
@@ -437,8 +436,7 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   handleCombatEvent(event) {
-    if (event.event === 'hit') this.cameras.main.shake(100, 0.002);
-    if (event.event === 'respawn') this.cameras.main.flash(180, 255, 220, 160);
+    if (event.event === 'hit') this.cameras.main.shake(100, 0.002);    if (event.event === 'respawn') this.cameras.main.flash(180, 255, 220, 160);
   }
 
   spawnLocalFireball(angle) {
@@ -573,6 +571,16 @@ export class ArenaScene extends Phaser.Scene {
       this.heroVisual.rotation = projectedAngle(direction.x, direction.y) + Math.PI / 2;
     }
     if (this.network.connected) {
+      // Predict movement locally every render frame; server snapshots correct drift smoothly.
+      const predicted = stepLocalPrediction(
+        this.localPrediction,
+        this.hero,
+        direction,
+        delta,
+        { speed: SPEED, world: WORLD, obstacles: this.obstacleCircles, radius: 15 },
+        resolveCircleAgainstArena
+      );
+      this.hero.setPosition(predicted.x, predicted.y);
       // Match the input send rate to the server's 20 Hz simulation, not render FPS.
       this.networkInputAccumulator += Math.min(delta, 100);
       if (this.networkInputAccumulator >= 50) {
