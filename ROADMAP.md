@@ -52,7 +52,7 @@ This roadmap prioritizes a stable playable core first, then expands gameplay and
 - [ ] Implement lava zones and damage/death flow.
 - [ ] Separate simulation from presentation where required.
 - [ ] Add projectile/effect pooling if profiling demonstrates allocation pressure.
-- [ ] Add stable remote-player interpolation.
+- [x] Interpolate remote-player positions and facing between timestamped 20 Hz snapshots using a 100 ms client render buffer; server simulation remains authoritative.
 - [ ] Add long-session memory and lifecycle tests.
 
 ### P2 — Ability framework
@@ -214,3 +214,12 @@ A phase is complete only when:
 - Snapshot broadcasts now skip clients with more than 64 KB queued, avoiding unbounded stale-snapshot backlog.
 - Added deterministic unit tests for limiter thresholds, exact window reset, clock rollback, and invalid configuration.
 - Integration tests and an explicit slow-client disconnect policy remain open.
+
+
+## Remote-player interpolation — 2026-11-26
+
+- Added src/net/remote-interpolation.js, a bounded timestamped sample buffer with linear interpolation for position and facing.
+- ArenaScene now queues each remote-player snapshot and renders remote actors 100 ms behind the latest client receive time, smoothing motion between 20 Hz snapshots. Health updates remain immediate; local player/server simulation and collision authority are unchanged.
+- Added five deterministic tests for interpolation, buffer edges, duplicate/out-of-order timestamps, capacity, and malformed samples.
+- Local verification in the isolated Node workspace: npm test passed 45/45 and npm run build succeeded. Vite's existing large-chunk warning remains (~1.51 MB minified / 350 KB gzip). GitHub Actions and Preview verification pending.
+- Manual two-client latency/jitter tuning remains open; 100 ms is an initial render buffer, not a measured optimum.
