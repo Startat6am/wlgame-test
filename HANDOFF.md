@@ -252,3 +252,11 @@ Do not reconstruct work from chat history until the repository and branch have b
 - Slow clients are disconnected with WebSocket close code 1013 only after >256 KiB remains queued for 40 consecutive server ticks (2 seconds). The streak resets when bufferedAmount drops back to 256 KiB or below. Snapshots are skipped above 64 KiB.
 - Local verification in the isolated Node workspace: npm test passed 52/52, npm run build succeeded, node --check server/index.js succeeded, and git diff --check succeeded. This is unit-level verification; live WebSocket integration and network load tests remain outstanding.
 - GitHub Actions WLGame CI run #102 (ID 45766258303) passed on server code commit cad2fd6522523c6a219951a8f97a70a4a1b4eb81; CI run #104 (ID 45766338860) passed on documentation HEAD 53298e309f33ec8ac3ae724b4b3122eb45c2811c. Vercel Preview deployment dpl_F7NdfP753Hdb5CYpBLGNnNYVftn1 is READY for that exact HEAD at https://wlgame-test-bxe6prwrl-callback5.vercel.app. PR #1 remains Draft; do not merge before manual browser/two-client QA.
+
+
+## WebSocket integration smoke — 2026-11-26
+
+- Added server/server.integration.test.js and extended npm test to include server/*.test.js.
+- The integration test launches server/index.js as a child process on PORT=0, reads the assigned port from the listening log, connects with the ws client, verifies welcome/snapshot, confirms malformed JSON is ignored, sends 31 movement messages and checks the 31st reverse input is rate-limited, then sends a 1025-byte frame and verifies close code 1009 while the server process remains alive.
+- Local verification: npm test passed 53/53, npm run build succeeded, node --check server/index.js succeeded, and git diff --check succeeded. Known non-fatal Vite chunk warning remains (~1.51 MB minified / 350 KB gzip).
+- GitHub Actions and Preview verification pending for this new integration test. This is a one-client smoke test, not a multi-client load test or slow-socket saturation test. PR #1 remains Draft.
