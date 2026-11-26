@@ -272,8 +272,16 @@ A phase is complete only when:
 - [x] Document server-only `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, and optional `WLGAME_ROOM_ID` in `.env.example` (empty placeholders only; no credentials committed).
 - [x] Local verification on code state: `npm test` passed 76/76; `npm run build`, syntax checks for local server and Vercel endpoint/runtime, and `git diff --check` passed. The known non-fatal Vite chunk-size warning remains (~1.51 MB minified / 350 KB gzip).
 - [x] Live Upstash checks verified atomic lease acquisition, Redis Stream XADD/XREAD, fenced tick commit (Lua EVAL), and state persistence on the provisioned free database.
-- [ ] Verify live Pub/Sub SSE subscription delivery and reconnect behavior; the `PUBLISH` command itself was accepted, but no subscriber delivery has yet been observed.
+- [ ] Verify live Pub/Sub SSE subscription delivery and reconnect behavior; the `PUBLISH` command itself was accepted, but no subscriber delivery has yet been observed. A direct SSE test from the isolated runner was blocked by credential-handling controls.
 - [x] Configure Preview-only Vercel environment variables for `feature/isometric-arena`; production settings remain unchanged.
-- [ ] Deploy the latest exact branch HEAD with the new variables and confirm the WebSocket Function is actually running in `arn1`.
+- [x] Deploy the current runtime/config source with the Preview variables and confirm the WebSocket Function deployment reports region `arn1`: `dpl_AkmKYPTFiqaWwTQqzs1TTd8yN33F` (`READY`, source `7b5349d...`). The subsequent branch commits are documentation-only.
 - [ ] Test two-client traffic across separate Function instances, leader failover, 300-second reconnect, and manual gameplay.
 - Infrastructure note: the free Upstash database has been created with no reserved monthly charge. Keep usage within its free quota; do not upgrade to a paid plan without explicit approval. Current target pairing: Vercel Function `arn1` (Stockholm) + Upstash primary `eu-central-1` (Frankfurt).
+
+
+### Latest verified rollout status — 2026-11-26
+
+- GitHub Actions run #158 (`45773309161`) passed on branch HEAD `513a1b8a8ed69bd0fc702b914f058a07c002132f`: Vite build, `npm test`, and the workflow's Node syntax check succeeded.
+- Vercel Preview deployment `dpl_AkmKYPTFiqaWwTQqzs1TTd8yN33F` is READY, source `7b5349dc9987c9cda2a1cb1749db39eb9f3a60c8`, Function region `arn1` (Stockholm). Branch alias: `https://wlgame-test-git-feature-isometric-arena-callback5.vercel.app` (SSO-protected).
+- A manual forced deployment for exact docs-only HEAD was rejected because the Vercel Hobby team exceeded 100 deployments/day; automatic deployment for the app-code commit above succeeded after the region change. Avoid redundant deploys until quota resets.
+- Live Upstash tests confirmed lease acquisition, XADD/XREAD, and fenced atomic state commit. Pub/Sub SSE and actual two-client WebSocket traffic still need validation.
