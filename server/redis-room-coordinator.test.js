@@ -54,7 +54,7 @@ test('state commits are fenced by the current lease token and include snapshot p
 
 test('loads versioned state and publishes validated room inputs', async () => {
   const state = { version: 1, players: [], projectiles: [] };
-  const redis = fakeRedis([JSON.stringify(state)]);
+  const redis = fakeRedis([JSON.stringify(state), '1-0']);
   const coordinator = new RedisRoomCoordinator(redis);
   assert.deepEqual(await coordinator.loadState('arena'), state);
   await coordinator.publishInput('arena', { type: 'join', playerId: 'p1' });
