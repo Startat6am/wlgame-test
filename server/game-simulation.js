@@ -25,8 +25,7 @@ export class GameSimulation {
     this.projectiles = new Map();
   }
 
-  addPlayer(socket) {
-    const id = this.createId();
+  addPlayer(socket, id = this.createId()) {
     const player = {
       id, socket,
       x: 800 + (this.random() - 0.5) * 260,
@@ -152,6 +151,49 @@ export class GameSimulation {
     }
 
     return combatEvents;
+  }
+
+  serializeState() {
+    return {
+      version: 1,
+      players: [...this.players.values()].map(({ socket, ...player }) => ({ ...player })),
+      projectiles: [...this.projectiles.values()].map(({ hitIds, ...projectile }) => ({
+        ...projectile,
+        hitIds: [...hitIds]
+      }))
+    };
+  }
+
+  restoreState(state) {
+    if (!state || state.version !== 1 || !Array.isArray(state.players) || !Array.isArray(state.projectiles)) {
+      throw new TypeError('state must be a version 1 simulation snapshot');
+    }
+    const players = new Map();
+    for (const player of state.players) {
+      if (!player || typeof player.id !== 'string' ||
+          ![player.x, player.y, player.inputX, player.inputY, player.facingX, player.facingY,
+            player.vx, player.vy, player.health, player.maxHealth, player.damagePoints,
+            player.lastFireballAt].every(Number.isFinite)) {
+        throw new TypeError('state contains an invalid player');
+      }
+      players.set(player.id, {
+        ...player,
+        socket: null,
+        inputRate: player.inputRate && typeof player.inputRate === 'object' ? player.inputRate : {},
+        castRate: player.castRate && typeof player.castRate === 'object' ? player.castRate : {}
+      });
+    }
+    const projectiles = new Map();
+    for (const projectile of state.projectiles) {
+      if (!projectile || typeof projectile.id !== 'string' || typeof projectile.ownerId !== 'string' ||
+          ![projectile.x, projectile.y, projectile.vx, projectile.vy, projectile.distance].every(Number.isFinite) ||
+          !Array.isArray(projectile.hitIds)) {
+        throw new TypeError('state contains an invalid projectile');
+      }
+      projectiles.set(projectile.id, { ...projectile, hitIds: new Set(projectile.hitIds) });
+    }
+    this.players = players;
+    this.projectiles = projectiles;
   }
 
   createSnapshot() {
