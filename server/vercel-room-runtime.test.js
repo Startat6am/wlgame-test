@@ -47,7 +47,7 @@ test('room leader replays ordered join/input events and commits one authoritativ
   assert.equal(committed[3].lastEventId, '2-0');
   assert.equal(committed[4].type, 'tick');
   assert.equal(committed[4].snapshot.players[0].id, 'p1');
-  assert.ok(committed[4].snapshot.players[0].x > 800);
+  assert.equal(committed[4].snapshot.players[0].facingX, 1);
 });
 
 test('new leader restores simulation and resumes from persisted stream cursor', async () => {
