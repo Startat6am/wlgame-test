@@ -221,5 +221,5 @@ A phase is complete only when:
 - Added src/net/remote-interpolation.js, a bounded timestamped sample buffer with linear interpolation for position and facing.
 - ArenaScene now queues each remote-player snapshot and renders remote actors 100 ms behind the latest client receive time, smoothing motion between 20 Hz snapshots. Health updates remain immediate; local player/server simulation and collision authority are unchanged.
 - Added five deterministic tests for interpolation, buffer edges, duplicate/out-of-order timestamps, capacity, and malformed samples.
-- Local verification in the isolated Node workspace: npm test passed 45/45 and npm run build succeeded. Vite's existing large-chunk warning remains (~1.51 MB minified / 350 KB gzip). GitHub Actions and Preview verification pending.
+- Local verification in the isolated Node workspace: npm test passed 45/45 and npm run build succeeded. GitHub Actions WLGame CI run #100 (ID 45765989025) passed on code HEAD 71d023624ad4f6ac1c3c29b79c10695b4b02d8d8; Vercel Preview deployment dpl_2s45a3WV3zCu4hHUVnxq4HyJFr3u is READY for that exact SHA. Vite's existing large-chunk warning remains (~1.51 MB minified / 350 KB gzip).
 - Manual two-client latency/jitter tuning remains open; 100 ms is an initial render buffer, not a measured optimum.
