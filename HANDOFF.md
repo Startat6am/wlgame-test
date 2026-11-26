@@ -329,3 +329,10 @@ This section supersedes earlier notes above that said no Redis database was conf
 - Added `src/net/local-prediction.js` and `src/net/local-prediction.test.js` with coverage for initial spawn, frame-rate movement, smooth reconciliation, bounds, and large frame-delta capping. Existing `npm test` glob already includes `src/net/*.test.js`.
 - Code commit: `e55d52e72f4d40b738f83682e26f4766af1482d2`; helper commit: `642dc6378c97f35742b5960290a10d9cbd06f56d`; tests commit: `711c252a0c38907ef425cce35768cafd75b75cad`.
 - This is a code-level fix based on inspection, not yet verified in a browser or deployed. CI/build and a one-client Preview check remain pending. Do not claim the spikes are resolved until the user confirms smooth movement. No two-player test has been run or requested.
+
+
+### Verification after local prediction change
+
+- GitHub Actions WLGame CI run #163 (`45851090397`) passed for code commit `711c252a0c38907ef425cce35768cafd75b75cad`: install, Vite build, `npm test`, and server syntax check all succeeded. The following two commits only updated documentation.
+- Vercel automatically created Preview deployment `dpl_16GDCXt53aBGuJt8yYbHeG7dPmZx` for latest branch HEAD `3749b46a00b53b8e32505be8decedb723a03173c`, but it remains `QUEUED` at last check. Do not send the user to this deployment as the new fix until it reaches READY.
+- The previously READY Preview still contains the old hard-snap movement behavior. The new local prediction change has not yet been browser-tested or deployed. Single-player Preview QA is the next gate; no two-player test has been run.
