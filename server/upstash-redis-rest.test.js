@@ -83,3 +83,25 @@ test('rejects invalid credentials, commands, and Redis error responses', async (
   await assert.rejects(redis.command([]), TypeError);
   await assert.rejects(redis.command(['BAD']), /ERR bad command/);
 });
+
+test('parses CRLF-delimited Upstash SSE frames', async () => {
+  const encoder = new TextEncoder();
+  const redis = new UpstashRedisRest({
+    url: 'https://redis.example',
+    token: 'secret',
+    fetchImpl: async () => ({
+      ok: true,
+      status: 200,
+      body: new ReadableStream({
+        start(controller) {
+          controller.enqueue(encoder.encode('data: subscribe,room,1\\r\\n\\r\\n'));
+          controller.enqueue(encoder.encode('data: message,room,{"type":"tick"}\\r\\n\\r\\n'));
+          controller.close();
+        }
+      })
+    })
+  });
+  const messages = [];
+  await redis.subscribe('room', { onMessage: (message) => messages.push(message) });
+  assert.deepEqual(messages, [{ type: 'tick' }]);
+});
