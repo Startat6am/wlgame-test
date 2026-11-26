@@ -1,6 +1,6 @@
 import { WebSocketServer } from 'ws';
 import { randomUUID } from 'node:crypto';
-import { resolveCircleCollision, segmentIntersectsCircle } from '../src/game/combat/combat-math.js';
+import { resolveCircleAgainstArena, segmentIntersectsCircle } from '../src/game/combat/combat-math.js';
 import { ARENA_OBSTACLES } from '../src/game/data/arena.js';
 
 const PORT = Number(process.env.PORT ?? 2567);
@@ -10,6 +10,7 @@ const SPEED = 230;
 const FIREBALL = { damage: 8, cooldownMs: 1400, speed: 520, radius: 9, maxDistance: 520, baseKnockback: 130 };
 const PLAYER_RADIUS = 15;
 const OBSTACLES = ARENA_OBSTACLES.map(({ x, y, radius }) => [x, y, radius]);
+const OBSTACLE_CIRCLES = ARENA_OBSTACLES;
 const players = new Map();
 const projectiles = new Map();
 const server = new WebSocketServer({ port: PORT });
@@ -92,24 +93,15 @@ setInterval(() => {
   const now = Date.now();
 
   for (const player of players.values()) {
-    let nextX = player.x + player.inputX * SPEED * dt + player.vx * dt;
-    let nextY = player.y + player.inputY * SPEED * dt + player.vy * dt;
-    // Match the offline Phaser arena's circular obstacle bodies.
-    for (let pass = 0; pass < 2; pass += 1) {
-      for (const [obstacleX, obstacleY, obstacleRadius] of OBSTACLES) {
-        const resolved = resolveCircleCollision(
-          nextX, nextY, PLAYER_RADIUS, obstacleX, obstacleY, obstacleRadius
-        );
-        nextX = resolved.x;
-        nextY = resolved.y;
-      }
-    }
-    player.x = nextX;
-    player.y = nextY;
+    const resolved = resolveCircleAgainstArena(
+      player.x + player.inputX * SPEED * dt + player.vx * dt,
+      player.y + player.inputY * SPEED * dt + player.vy * dt,
+      PLAYER_RADIUS, WORLD, OBSTACLE_CIRCLES
+    );
+    player.x = resolved.x;
+    player.y = resolved.y;
     player.vx *= 0.88;
     player.vy *= 0.88;
-    player.x = Math.max(24, Math.min(WORLD.width - 24, player.x));
-    player.y = Math.max(24, Math.min(WORLD.height - 24, player.y));
   }
 
   for (const [id, projectile] of projectiles) {
