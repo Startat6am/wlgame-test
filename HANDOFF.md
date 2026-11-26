@@ -8,8 +8,8 @@
 - **Active work branch:** `feature/isometric-arena`
 - **PR:** https://github.com/Startat6am/wlgame-test/pull/1 (open, draft; do not merge until manual browser QA is complete).
 - **Base branch:** `main`, base commit at PR creation: `b30dccee049e99af70a9563deccb2f97676183b3`.
-- **Latest functional code checkpoint:** `c1354b8600dd318c4aecc6c4973dbce0fc374545` — shared immutable arena obstacle geometry used by both client and server, with tests.
-- **Latest roadmap checkpoint:** `d6d1086c4c1e7afba757a8ee1e1f328578adacc7` — records the shared obstacle layout milestone and current CI snapshot.
+- **Latest functional code checkpoint:** `68a0d23593e6e568eb04bfc0ba05102516a9b152` — WebSocket protocol validation, slow-client policy, and real-server integration smoke test; includes remote-player interpolation and prior arena/combat milestones.
+- **Latest roadmap checkpoint:** `43635f5d12c63d6a1579ba3160ea7918cb1b582e` — records the latest WebSocket integration milestone and verification.
 - **Current handoff refresh:** documentation-only; verify live branch HEAD after this commit.
 - **Checkpoint date:** 2026-11-26.
 
