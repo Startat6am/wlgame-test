@@ -115,6 +115,7 @@ export class NetworkClient {
     this.socket = null;
     this.connected = false;
     this.playerId = null;
+    this.onStatus('Локальная игра');
     socket?.close();
   }
 }
