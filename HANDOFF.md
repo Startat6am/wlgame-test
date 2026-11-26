@@ -194,3 +194,5 @@ Do not reconstruct work from chat history until the repository and branch have b
 - Code commit: `582d3223be96f4df0ee7a43438a9d112b73a9bb1`.
 - This is a targeted performance hypothesis, not a confirmed root-cause diagnosis. Browser/device reproduction and verification remain required; do not claim the freeze is fixed until manually tested.
 - Next: verify CI and Preview for this code commit, then reproduce FIRE press/hold/drag/release in desktop and mobile browsers. If the freeze persists, capture browser console/performance traces and inspect Phaser pointer lifecycle and scene update cost.
+
+- Follow-up after user reported the first optimization still froze the browser: removed the per-render-frame Phaser pointer-array polling entirely. Aim now updates from local `pointermove` events and samples final coordinates on `pointerup`; no per-frame aim work occurs. Commit: `deb3dac125da76a29b3c52a5c7d222521e4c9535`. Still requires manual reproduction/verification.
