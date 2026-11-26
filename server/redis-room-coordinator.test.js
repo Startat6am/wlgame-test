@@ -58,7 +58,7 @@ test('loads versioned state and publishes validated room inputs', async () => {
   const coordinator = new RedisRoomCoordinator(redis);
   assert.deepEqual(await coordinator.loadState('arena'), state);
   await coordinator.publishInput('arena', { type: 'join', playerId: 'p1' });
-  assert.deepEqual(redis.calls[1], ['PUBLISH', 'wlgame:room:arena:events', { type: 'join', playerId: 'p1' }]);
+  assert.deepEqual(redis.calls[1], ['XADD', 'wlgame:room:arena:inputs', '*', 'event', JSON.stringify({ type: 'join', playerId: 'p1' })]);
 });
 
 test('rejects invalid room identifiers and malformed persisted state', async () => {
