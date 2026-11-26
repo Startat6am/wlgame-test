@@ -241,5 +241,5 @@ A phase is complete only when:
 
 - Added server/server.integration.test.js; it launches the actual Node WebSocket server on an ephemeral port and exercises welcome/snapshot delivery, malformed JSON handling, the 30 input/sec rate limit, and the 1 KiB max-payload close behavior.
 - Updated the listening log to report the assigned ephemeral port and included server/*.test.js in npm test.
-- Local verification: npm test passed 53/53, npm run build succeeded, node --check server/index.js succeeded, and git diff --check succeeded. The Vite large-chunk warning remains non-fatal.
+- Local verification: npm test passed 53/53, npm run build succeeded, node --check server/index.js succeeded, and git diff --check succeeded. GitHub Actions WLGame CI run #107 (ID 45766726278) passed on integration-test commit 68a0d23593e6e568eb04bfc0ba05102516a9b152. Vercel Preview deployment dpl_9Z5B7kTVNZM3Pq4r1HVXoy9quBTp is READY for that exact code SHA at https://wlgame-test-25as0es1h-callback5.vercel.app. The Vite large-chunk warning remains non-fatal.
 - This is a single-client protocol smoke test. Multi-client concurrency/load tests and slow-client queue saturation still require dedicated test harnesses.
