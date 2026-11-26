@@ -285,3 +285,6 @@ A phase is complete only when:
 - Vercel Preview deployment `dpl_AkmKYPTFiqaWwTQqzs1TTd8yN33F` is READY, source `7b5349dc9987c9cda2a1cb1749db39eb9f3a60c8`, Function region `arn1` (Stockholm). Branch alias: `https://wlgame-test-git-feature-isometric-arena-callback5.vercel.app` (SSO-protected).
 - A manual forced deployment for exact docs-only HEAD was rejected because the Vercel Hobby team exceeded 100 deployments/day; automatic deployment for the app-code commit above succeeded after the region change. Avoid redundant deploys until quota resets.
 - Live Upstash tests confirmed lease acquisition, XADD/XREAD, and fenced atomic state commit. Pub/Sub SSE and actual two-client WebSocket traffic still need validation.
+
+- Latest CI after documentation updates: run #160 (`45773485362`) passed on HEAD `3ae8c7f123c1a1de80271b91ac5c870e64874964`.
+- Live Redis lease verification also confirmed token renewal, release, and rejection of a stale token after release.
