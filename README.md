@@ -37,15 +37,15 @@ The development client connects to `ws://localhost:2567`. Without the server, th
 
 Vercel Functions now support native WebSocket connections. The target architecture is:
 
-- Vercel Function `/api/ws`: WebSocket transport and local connection fan-out.
-- Upstash Redis: cross-instance message fan-out, room coordination, and recoverable authoritative state.
+- Vercel Function `/api/ws`: WebSocket transport and per-instance connection fan-out (`api/ws.js` is now in the repository).
+- Upstash Redis: durable input stream, fenced single-writer room lease, recoverable authoritative state, and Pub/Sub snapshot fan-out.
 - `server/game-simulation.js`: transport-independent authoritative 20 Hz game simulation, shared by local and Vercel adapters.
 
 Vercel pins each WebSocket connection to one Function instance and closes it at the Function's maximum duration. The client now reconnects with bounded exponential backoff. Because different players can land on different instances, instance-local memory alone is not a valid multiplayer state store.
 
-**Migration status:** simulation extraction and client reconnect support are implemented and locally verified. The Vercel WebSocket endpoint and Redis-backed cross-instance coordinator are not enabled yet. No Redis database is currently connected to this project; do not deploy an instance-local-only multiplayer endpoint as if it supported cross-instance matches.
+**Migration status:** simulation extraction, client reconnect support, the Vercel `/api/ws` Function entrypoint, and a Redis-backed room runtime/coordinator are implemented with unit tests. The endpoint remains inactive until `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, and `VITE_WS_SERVER_URL=/api/ws` are configured. No Redis database is currently connected to this project; do not claim deployed multiplayer until the secrets are configured and a real two-client test passes.
 
-For an explicitly configured external development server, set `VITE_WS_SERVER_URL` to its `ws://` or `wss://` URL. See `.env.example`.
+For Vercel Preview/Production, set `VITE_WS_SERVER_URL=/api/ws`. For a separate development server, set it to an explicit `ws://` or `wss://` URL. See `.env.example`.
 
 ## Controls
 
