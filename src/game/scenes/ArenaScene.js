@@ -7,6 +7,7 @@ import { segmentIntersectsCircle } from '../combat/combat-math.js';
 import { ARENA_OBSTACLES } from '../data/arena.js';
 import { createTrainingTarget, hitTrainingTarget, updateTrainingTarget } from '../combat/offline-combat.js';
 import { createFrameTimeHistory, recordFrameTime, getFrameTimeStats } from '../performance/frame-time.js';
+import { createRemoteInterpolationBuffer, pushRemotePlayerSample, sampleRemotePlayer, REMOTE_INTERPOLATION_DELAY_MS } from '../../net/remote-interpolation.js';
 
 const SPEED = balance.baseline.movementSpeed.value;
 const FIREBALL = balance.abilities.find((ability) => ability.id === 'fireball');
@@ -357,7 +358,10 @@ export class ArenaScene extends Phaser.Scene {
       fontFamily: 'Arial, sans-serif', fontSize: '11px', color: '#ffd1bd',
       stroke: '#172017', strokeThickness: 3
     }).setOrigin(0.5, 1).setDepth(p.y + 2);
-    return { sprite, label, health: player.health, maxHealth: player.maxHealth };
+    return {
+      sprite, label, health: player.health, maxHealth: player.maxHealth,
+      interpolation: createRemoteInterpolationBuffer()
+    };
   }
 
   applySnapshot(snapshot) {
@@ -385,13 +389,9 @@ export class ArenaScene extends Phaser.Scene {
         view = this.createRemotePlayer(player);
         this.remotePlayers.set(player.id, view);
       }
-      const p = worldToScreen(player.x, player.y);
-      view.sprite.setPosition(p.x, p.y).setDepth(p.y + 1);
-      if (player.facingX || player.facingY) {
-        view.sprite.rotation = projectedAngle(player.facingX, player.facingY) + Math.PI / 2;
-      }
-      view.label.setPosition(p.x, p.y - 42).setDepth(p.y + 2);
+      pushRemotePlayerSample(view.interpolation, player, this.time.now);
       view.health = player.health;
+      view.maxHealth = player.maxHealth;
     }
     for (const [id, view] of this.remotePlayers) {
       if (!seenPlayers.has(id)) {
@@ -419,6 +419,20 @@ export class ArenaScene extends Phaser.Scene {
         view.destroy();
         this.projectileViews.delete(id);
       }
+    }
+  }
+
+  updateRemotePlayers() {
+    const renderAt = this.time.now - REMOTE_INTERPOLATION_DELAY_MS;
+    for (const view of this.remotePlayers.values()) {
+      const sample = sampleRemotePlayer(view.interpolation, renderAt);
+      if (!sample) continue;
+      const p = worldToScreen(sample.x, sample.y);
+      view.sprite.setPosition(p.x, p.y).setDepth(p.y + 1);
+      if (sample.facingX || sample.facingY) {
+        view.sprite.rotation = projectedAngle(sample.facingX, sample.facingY) + Math.PI / 2;
+      }
+      view.label.setPosition(p.x, p.y - 42).setDepth(p.y + 2);
     }
   }
 
@@ -528,6 +542,7 @@ export class ArenaScene extends Phaser.Scene {
       this.trainingTarget = updateTrainingTarget(this.trainingTarget, delta, this.time.now, WORLD, this.obstacleCircles);
       this.updateTrainingTargetView();
     }
+    this.updateRemotePlayers();
     this.updateLocalProjectiles(delta);
     if (this.time.now >= this.nextFpsUpdate) {
       const actualFps = this.game.loop.actualFps;
