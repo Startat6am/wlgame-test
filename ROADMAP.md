@@ -63,12 +63,15 @@ This roadmap prioritizes a stable playable core first, then expands gameplay and
 - [ ] Add balance tests and source-confidence metadata for every parameter.
 
 ### P3 — Online multiplayer
-- [ ] Deploy the Node.js WebSocket server on persistent hosting separate from Vercel.
+- [ ] Complete Vercel Functions WebSocket migration with Redis-backed cross-instance room coordination; no separate always-on Node host is planned unless measurements show Vercel is unsuitable.
 - [x] Support an explicit client WebSocket endpoint through `VITE_WS_SERVER_URL` with a same-host development fallback.
 - [ ] Add rooms, lobby, ready state, match lifecycle, and disconnect handling.
 - [x] Add a 1 KB WebSocket payload cap, per-player input/cast rate limits, and snapshot backpressure protection (skip stale snapshots above 64 KB queued).
 - [x] Extract WebSocket protocol parsing and rate limits into pure unit-testable functions; test malformed/oversized/invalid payloads, input/cast floods, and slow-client backpressure policy. Disconnect after >256 KiB queued for 40 consecutive ticks (2 seconds).
 - [x] Add a live WebSocket integration test for malformed JSON, movement flood limiting, and oversized-frame rejection.
+- [x] Extract the authoritative 20 Hz simulation into `server/game-simulation.js`, shared by transport adapters; retain the standalone Node server for local development.
+- [x] Add bounded exponential reconnect with jitter for WebSocket disconnects and duration-limit closures; route production HTTPS clients toward the same-origin `/api/ws` endpoint.
+- [ ] Implement and test the Vercel `/api/ws` adapter, Redis Pub/Sub SSE fan-out, single-writer room lease, and state recovery before enabling online play.
 - [ ] Add multi-client concurrency/load tests and exercise slow-client disconnection under real socket backpressure.
 - [ ] Load-test multiple concurrent matches.
 - [ ] Measure latency, jitter, snapshot bandwidth, and server event-loop lag.
@@ -243,3 +246,14 @@ A phase is complete only when:
 - Updated the listening log to report the assigned ephemeral port and included server/*.test.js in npm test.
 - Local verification: npm test passed 53/53, npm run build succeeded, node --check server/index.js succeeded, and git diff --check succeeded. GitHub Actions WLGame CI run #107 (ID 45766726278) passed on integration-test commit 68a0d23593e6e568eb04bfc0ba05102516a9b152. Vercel Preview deployment dpl_9Z5B7kTVNZM3Pq4r1HVXoy9quBTp is READY for that exact code SHA at https://wlgame-test-25as0es1h-callback5.vercel.app. The Vite large-chunk warning remains non-fatal.
 - This is a single-client protocol smoke test. Multi-client concurrency/load tests and slow-client queue saturation still require dedicated test harnesses.
+
+
+## Vercel WebSocket migration — 2026-11-26
+
+- Decision: use Vercel Functions for the WebSocket endpoint; do not provision Railway/Fly or another persistent host at this stage. Vercel WebSocket support reached GA on 2026-10-20.
+- Constraints: each connection is pinned to one Function instance and ends at that Function's maximum duration (Hobby: 300 seconds with Fluid Compute). New connections can land on a different instance, so in-memory room state cannot be authoritative across clients.
+- Current implementation: `server/game-simulation.js` extracts the deterministic 20 Hz authoritative game state and combat loop from the standalone WebSocket transport. `server/index.js` now adapts sockets to this simulation. `NetworkClient` reconnects with bounded exponential backoff and jitter; production HTTPS URL resolution targets `/api/ws`, while HTTP development retains port 2567.
+- Coordination design under evaluation: Upstash Redis REST Pub/Sub provides an SSE subscriber endpoint and publish endpoint. A room must have a single fenced simulation writer/lease, durable recoverable state, and cross-instance snapshot/combat fan-out. A simple process-local simulation in each Function is explicitly insufficient.
+- Infrastructure: no Upstash Redis database is currently present in the connected account. Do not create a potentially billable resource or expose credentials without user approval.
+- Local verification after extraction/reconnect changes: `npm test` passed 57/57; `npm run build`, `node --check server/index.js`, and `git diff --check` succeeded. The existing Vite large-chunk warning remains non-fatal (~1.51 MB minified / 350 KB gzip).
+- Not yet complete: Vercel `/api/ws` entrypoint, Redis coordinator, multi-instance tests, Vercel environment configuration, deployed two-client test, and manual browser/device QA.
