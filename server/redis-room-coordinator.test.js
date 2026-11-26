@@ -48,8 +48,10 @@ test('state commits are fenced by the current lease token and include snapshot p
   assert.equal(command[3], 'wlgame:room:arena:lease');
   assert.equal(command[4], 'wlgame:room:arena:state');
   assert.equal(command[5], 'wlgame:room:arena:snapshots');
-  assert.equal(JSON.parse(command[7]).version, 1);
-  assert.deepEqual(JSON.parse(command[9]), event);
+  assert.equal(command[6], 'wlgame:room:arena:inputs');
+  assert.equal(JSON.parse(command[8]).version, 1);
+  assert.deepEqual(JSON.parse(command[10]), event);
+  assert.equal(command[11], '0-0');
 });
 
 test('loads versioned state and publishes validated room inputs', async () => {
