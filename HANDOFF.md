@@ -198,3 +198,13 @@ Do not reconstruct work from chat history until the repository and branch have b
 - Follow-up after user reported the first optimization still froze the browser: removed the per-render-frame Phaser pointer-array polling entirely. Aim now updates from local `pointermove` events and samples final coordinates on `pointerup`; no per-frame aim work occurs. Commit: `deb3dac125da76a29b3c52a5c7d222521e4c9535`. Still requires manual reproduction/verification.
 
 - FIRE guide anchoring fix: while FIRE is held, the guide is redrawn only when the hero's world position changes, preserving the current aim vector. This keeps the 100px guide attached to the moving hero when strafing around an obstacle without reintroducing per-frame pointer polling. Commit `20115b9170ff6db7c4dde5deef14f8ea501374f4`; manual QA pending.
+
+
+## Frame-time diagnostics milestone — 2026-11-26
+
+- Added `src/game/performance/frame-time.js`: fixed-capacity 120-sample Float64 ring buffer with p50/p95/p99/max statistics.
+- Integrated into `ArenaScene.update`: record the Phaser frame delta; refresh the HUD twice per second with FPS and p95/p99 milliseconds. Sorting occurs only on HUD refresh, not every frame.
+- Added `src/game/performance/frame-time.test.js` (four tests) and included the performance test glob in `npm test`.
+- Application code commit: `34adef0b369407f1531518692bb22bb562d7aa17`; metrics module `33ddb6e6989033fb37c5892db66c94b5f3fd9ce3`; test `ec7d226a62a8a457b91f3f700e5f1f736a78fdae`; package script `d511d03aae4ed6a23301e71a4b2efe44505d4c18`.
+- Documentation update: pending verification after this commit.
+- Manual performance baselines are still not captured; do not claim the game is faster. The HUD is intended to expose frame-time spikes while reproducing issues.
