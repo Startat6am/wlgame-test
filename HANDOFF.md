@@ -260,3 +260,21 @@ Do not reconstruct work from chat history until the repository and branch have b
 - The integration test launches server/index.js as a child process on PORT=0, reads the assigned port from the listening log, connects with the ws client, verifies welcome/snapshot, confirms malformed JSON is ignored, sends 31 movement messages and checks the 31st reverse input is rate-limited, then sends a 1025-byte frame and verifies close code 1009 while the server process remains alive.
 - Local verification: npm test passed 53/53, npm run build succeeded, node --check server/index.js succeeded, and git diff --check succeeded. Known non-fatal Vite chunk warning remains (~1.51 MB minified / 350 KB gzip).
 - GitHub Actions WLGame CI run #107 (ID 45766726278) passed on integration-test commit 68a0d23593e6e568eb04bfc0ba05102516a9b152. Vercel Preview deployment dpl_9Z5B7kTVNZM3Pq4r1HVXoy9quBTp is READY for that exact code SHA at https://wlgame-test-25as0es1h-callback5.vercel.app. This is a one-client smoke test, not a multi-client load test or slow-socket saturation test. PR #1 remains Draft.
+
+
+## Vercel WebSocket migration — 2026-11-26
+
+- User approved proceeding with a Vercel-only WebSocket architecture. Do not provision a separate persistent Node host at this stage.
+- Verified project: Vercel project `wlgame-test`, team Hobby. A connected Upstash Redis database was not found in the authorized account scope.
+- Official Vercel WebSocket support is GA (2026-10-20). Connections are pinned to one Function instance and obey Function maximum duration; Hobby currently has a 300-second maximum with Fluid Compute. Different connections may be assigned to different instances.
+- Extracted the authoritative simulation into `server/game-simulation.js` (`GameSimulation`, `GAME_CONFIG`). The local `server/index.js` is now a thin `ws` transport adapter that keeps the existing 20 Hz authoritative movement, projectile collision, hit, knockback, respawn, snapshot and slow-client handling.
+- Added `server/game-simulation.test.js` for fixed-tick movement, snapshot serialization, Fireball cooldown, and player/projectile cleanup.
+- Added `src/net/reconnect.js` and tests. `NetworkClient` now reconnects after disconnects using bounded exponential backoff with jitter, avoids duplicate sockets, and stops retrying on explicit disconnect. This supports Vercel's duration-bounded socket lifecycle.
+- Updated `src/net/websocket-url.js`: HTTPS pages resolve to same-origin `wss://<host>/api/ws`; HTTP development still uses `ws://<hostname>:2567`. Explicit `VITE_WS_SERVER_URL` still overrides the default.
+- Updated README and ROADMAP to document the Vercel migration and the current non-production state.
+- Local verification on the exact source state before the documentation commits: `npm test` passed **57/57**; `npm run build`, `node --check server/index.js`, and `git diff --check` passed. The existing Vite large-chunk warning remains (~1.51 MB minified / 350 KB gzip).
+- No Vercel `/api/ws` endpoint has been deployed yet. Do not treat the URL routing change as proof that the endpoint exists or that cross-instance multiplayer works.
+- Redis design constraint: Upstash REST supports Pub/Sub through an SSE `/subscribe` endpoint and HTTP `/publish`; REST blocking `XREAD` is not supported. The next adapter must implement a single fenced writer/lease per room, recoverable state, and per-instance local socket fan-out. Do not use independent in-memory simulations per Function.
+- No Redis database was created because account provisioning can create billable usage depending on account/payment settings. Ask for approval before creating a database or configuring a paid plan; prefer an explicitly free tier if available.
+- Manual browser/device QA and deployed two-client tests remain outstanding. PR #1 remains Draft; do not merge before manual QA.
+- Current source changes include simulation extraction, reconnect logic, production URL routing, and new tests. Verify the current branch HEAD, CI and Vercel deployment after the documentation commits before reporting deployment status.
