@@ -75,3 +75,47 @@ test('leader stops publishing when its fenced state commit is rejected', async (
   assert.equal(await runtime.tickOnce(), false);
   assert.equal(runtime.leaseToken, null);
 });
+
+test('WebSocket attachment subscribes before welcome and broadcasts shared snapshots', async () => {
+  const { EventEmitter } = await import('node:events');
+  const coordinator = makeCoordinator();
+  const appended = [];
+  coordinator.appendEvent = async (_room, event) => { appended.push(event); return `${appended.length}-0`; };
+  const redis = {
+    subscribe: async (_channel, { onReady, signal }) => {
+      onReady();
+      await new Promise((resolve) => signal.addEventListener('abort', resolve, { once: true }));
+    }
+  };
+  const runtime = new VercelRoomRuntime({
+    redis, coordinator, roomId: 'test-room', instanceId: 'local-instance',
+    setIntervalImpl: () => 1, clearIntervalImpl: () => {}
+  });
+  class Socket extends EventEmitter {
+    readyState = 1;
+    bufferedAmount = 0;
+    sent = [];
+    send(message) { this.sent.push(JSON.parse(message)); }
+    close() { this.readyState = 3; this.emit('close'); }
+  }
+  const socket = new Socket();
+  const playerId = await runtime.attach(socket);
+  assert.equal(socket.sent[0].type, 'welcome');
+  assert.equal(socket.sent[0].id, playerId);
+  assert.equal(appended[0].type, 'join');
+
+  runtime.handlePublishedEvent({
+    type: 'tick', epoch: 1, instanceId: 'remote-instance',
+    snapshot: { type: 'snapshot', players: [{ id: playerId, x: 10, y: 20 }] },
+    combatEvents: []
+  });
+  assert.equal(socket.sent[1].type, 'snapshot');
+  assert.equal(socket.sent[1].players[0].id, playerId);
+
+  socket.emit('message', Buffer.from(JSON.stringify({ type: 'input', x: 1, y: 0 })));
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(appended[1].type, 'input');
+  assert.equal(appended[1].playerId, playerId);
+
+  await runtime.stop();
+});
