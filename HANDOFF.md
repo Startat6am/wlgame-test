@@ -208,3 +208,10 @@ Do not reconstruct work from chat history until the repository and branch have b
 - Application code commit: `34adef0b369407f1531518692bb22bb562d7aa17`; metrics module `33ddb6e6989033fb37c5892db66c94b5f3fd9ce3`; test `ec7d226a62a8a457b91f3f700e5f1f736a78fdae`; package script `d511d03aae4ed6a23301e71a4b2efe44505d4c18`.
 - Documentation update: pending verification after this commit.
 - Manual performance baselines are still not captured; do not claim the game is faster. The HUD is intended to expose frame-time spikes while reproducing issues.
+
+
+### Verification — frame-time diagnostics
+
+- Current branch/PR head at verification: `d778c52d6a17ae69f73a610f451975b88fc44446`; PR #1 remains open and Draft.
+- GitHub Actions WLGame CI run #89 (ID `45762329119`) completed SUCCESS on this exact HEAD. The job passed `npm install`, `npm run build`, `npm test`, and `node --check server/index.js`.
+- Vercel Preview deployment `dpl_6ny2i5AbnHx2EXbvurykKkdso9hq` is READY for the exact HEAD. Preview alias: https://wlgame-test-git-feature-isometric-arena-callback5.vercel.app. This is build/deploy verification only; no manual gameplay or performance baseline is claimed.
