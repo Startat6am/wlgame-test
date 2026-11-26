@@ -71,7 +71,8 @@ This roadmap prioritizes a stable playable core first, then expands gameplay and
 - [x] Add a live WebSocket integration test for malformed JSON, movement flood limiting, and oversized-frame rejection.
 - [x] Extract the authoritative 20 Hz simulation into `server/game-simulation.js`, shared by transport adapters; retain the standalone Node server for local development.
 - [x] Add bounded exponential reconnect with jitter for WebSocket disconnects and duration-limit closures; route production HTTPS clients toward the same-origin `/api/ws` endpoint.
-- [ ] Implement and test the Vercel `/api/ws` adapter, Redis Pub/Sub SSE fan-out, single-writer room lease, and state recovery before enabling online play.
+- [x] Implement the Vercel `/api/ws` adapter, Redis Pub/Sub SSE fan-out, single-writer room lease, durable input stream, and state recovery code with mocked integration/unit coverage.
+- [ ] Provision/configure Redis secrets and validate the actual Redis REST/Lua/Streams/SSE behavior against a real database.
 - [ ] Add multi-client concurrency/load tests and exercise slow-client disconnection under real socket backpressure.
 - [ ] Load-test multiple concurrent matches.
 - [ ] Measure latency, jitter, snapshot bandwidth, and server event-loop lag.
@@ -136,7 +137,7 @@ A phase is complete only when:
 1. User reports no major visible issues so far; retain this as feedback, not as a substitute for device/browser QA. Perform targeted Preview checks for arena bounds, camera, obstacle alignment, actor depth, desktop/phone layouts, FIRE and touch input before merging P6a.
 2. Manually verify obstacle collision in offline and online play, including sliding along rock edges and Fireball impacts.
 3. Manually playtest the new offline training target: verify hit registration, HP display, knockback against arena boundaries/obstacles, lethal hit, and 1.8-second respawn. Current target is explicitly a prototype training dummy, not an AI opponent.
-4. Configure persistent WebSocket hosting and an explicit client server URL before claiming online multiplayer is available outside local development.
+4. Provision/configure Upstash Redis (with explicit approval), add its server-only secrets to Vercel, set `VITE_WS_SERVER_URL=/api/ws`, then verify two clients routed to separate Function instances.
 
 
 ## Verification update — 2026-11-25 (session continuation)
@@ -253,7 +254,23 @@ A phase is complete only when:
 - Decision: use Vercel Functions for the WebSocket endpoint; do not provision Railway/Fly or another persistent host at this stage. Vercel WebSocket support reached GA on 2026-10-20.
 - Constraints: each connection is pinned to one Function instance and ends at that Function's maximum duration (Hobby: 300 seconds with Fluid Compute). New connections can land on a different instance, so in-memory room state cannot be authoritative across clients.
 - Current implementation: `server/game-simulation.js` extracts the deterministic 20 Hz authoritative game state and combat loop from the standalone WebSocket transport. `server/index.js` now adapts sockets to this simulation. `NetworkClient` reconnects with bounded exponential backoff and jitter; production HTTPS URL resolution targets `/api/ws`, while HTTP development retains port 2567.
-- Coordination design under evaluation: Upstash Redis REST Pub/Sub provides an SSE subscriber endpoint and publish endpoint. A room must have a single fenced simulation writer/lease, durable recoverable state, and cross-instance snapshot/combat fan-out. A simple process-local simulation in each Function is explicitly insufficient.
+- Coordination design implemented in code: clients append ordered join/input/leave events to a Redis Stream; one fenced room leader (atomic lease plus monotonically increasing epoch) reads events and advances the simulation; each successful tick atomically persists simulation state, publishes a snapshot event, and trims acknowledged input events. Each Function instance subscribes to the snapshot Pub/Sub channel through Upstash SSE and forwards snapshots/combat events only to its local sockets. A simple process-local simulation in each Function is explicitly insufficient.
 - Infrastructure: no Upstash Redis database is currently present in the connected account. Do not create a potentially billable resource or expose credentials without user approval.
-- Local verification after extraction/reconnect changes: `npm test` passed 57/57; `npm run build`, `node --check server/index.js`, and `git diff --check` succeeded. The existing Vite large-chunk warning remains non-fatal (~1.51 MB minified / 350 KB gzip).
-- Not yet complete: Vercel `/api/ws` entrypoint, Redis coordinator, multi-instance tests, Vercel environment configuration, deployed two-client test, and manual browser/device QA.
+- Local verification after the complete Vercel/Redis runtime code: `npm test` passed 76/76; `npm run build`, `node --check server/index.js`, `node --check api/ws.js`, `node --check server/vercel-room-runtime.js`, and `git diff --check` succeeded. The existing Vite large-chunk warning remains non-fatal (~1.51 MB minified / 350 KB gzip).
+- Not yet complete: provisioning/configuring a real Redis database, testing the Lua/Streams/PubSub behavior against it, Vercel environment configuration, deployed two-client test across separate Function instances, and manual browser/device QA.
+
+
+## Vercel Function + Redis coordinator implementation — 2026-11-26
+
+- [x] Add `api/ws.js`, a native Node.js WebSocket Function entrypoint using the existing `ws` dependency; ordinary HTTP requests receive 426 and WebSocket frames are capped at 1 KiB.
+- [x] Add `vercel.json` with a 300-second maximum duration for `api/ws.js` (Hobby limit; reconnect behavior is implemented in the browser client).
+- [x] Add `server/upstash-redis-rest.js`: authenticated REST command execution, publish, and SSE subscribe parsing (including CRLF frames).
+- [x] Add `server/redis-room-coordinator.js`: atomic lease acquisition/renew/release with fencing epochs; Redis Stream append/read for ordered join/input/leave events; atomic tick state persistence + snapshot Pub/Sub + trimming of acknowledged input events.
+- [x] Add `server/vercel-room-runtime.js`: per-instance local socket fan-out, one authoritative room leader, event replay, state recovery after leader failover, lease renewal, and slow-client snapshot backpressure.
+- [x] Extend `GameSimulation` with explicit player IDs and JSON-safe state serialization/restore, including cooldown and projectile hit state.
+- [x] Client can be configured with same-origin `VITE_WS_SERVER_URL=/api/ws`; HTTPS deployment stays in offline mode until this flag is set, avoiding retry loops before the Redis service is configured. Local HTTP development still defaults to port 2567.
+- [x] Document server-only `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, and optional `WLGAME_ROOM_ID` in `.env.example` (empty placeholders only; no credentials committed).
+- [x] Local verification on code state: `npm test` passed 76/76; `npm run build`, syntax checks for local server and Vercel endpoint/runtime, and `git diff --check` passed. The known non-fatal Vite chunk-size warning remains (~1.51 MB minified / 350 KB gzip).
+- [ ] Test actual Upstash Redis Lua scripts, XREAD/XADD/XTRIM, and Pub/Sub SSE against a provisioned database; mock-based tests are not proof of live service compatibility.
+- [ ] Configure Vercel environment variables and test two-client traffic across separate Function instances, failover, 300-second reconnect, and manual gameplay.
+- Infrastructure blocker: no Redis database is currently connected in the authorized Upstash account. Do not provision or enable a potentially billable plan without explicit user approval.
