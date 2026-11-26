@@ -230,7 +230,7 @@ Do not reconstruct work from chat history until the repository and branch have b
 
 - `server/index.js` now configures `ws` with `maxPayload: 1024`, rate-limits each player's input stream to 30 messages/sec and Fireball casts to 3/sec, and skips snapshot sends when a client's `bufferedAmount` exceeds 64 KiB.
 - Fixed-window limiter is isolated in `src/net/rate-limit.js` with deterministic unit tests. Fireball's 1.4-second server cooldown remains the gameplay authority.
-- This prevents oversized frames, excessive inbound message processing, and growing outbound snapshot queues. It does not yet disconnect slow clients or provide integration/load testing.
+- This prevents oversized frames and excessive inbound processing. Snapshot delivery skips clients above 64 KiB buffered and closes a client with code 1013 after its queue stays above 256 KiB for 40 consecutive 20 Hz ticks (2 seconds); the counter resets when the queue drains. Live WebSocket integration and load testing remain open.
 - Verification and deployment for this change pending.
 
 
@@ -243,3 +243,12 @@ Do not reconstruct work from chat history until the repository and branch have b
 - Local verification in the isolated Node workspace: npm test passed 45/45, npm run build succeeded, node --check server/index.js succeeded, and git diff --check succeeded. Vite reports the known non-fatal large-chunk warning (~1.51 MB minified / 350 KB gzip).
 - GitHub Actions WLGame CI run #100 (ID 45765989025) passed on code HEAD 71d023624ad4f6ac1c3c29b79c10695b4b02d8d8. Vercel Preview deployment dpl_2s45a3WV3zCu4hHUVnxq4HyJFr3u is READY for that exact SHA at https://wlgame-test-5vzfmje1n-callback5.vercel.app. No browser or two-client gameplay QA has been performed. The 100 ms buffer is an initial tuning value; verify perceived latency/jitter with two clients before treating it as final.
 - Previous verified Preview checkpoint b9ca7f2c27b8c3c32e4b7cec30eb72779aa38c8e is READY at https://wlgame-test-32be2e91h-callback5.vercel.app; branch alias https://wlgame-test-git-feature-isometric-arena-callback5.vercel.app.
+
+
+## WebSocket protocol and slow-client policy — 2026-11-26
+
+- Extracted parsing/validation and existing per-player rate limits into src/net/websocket-protocol.js. Server message handling now consumes normalized input/cast commands from this module.
+- Added deterministic tests for malformed JSON, oversized/unknown/non-finite messages, 30 input/sec, 3 cast/sec, 64 KiB snapshot skip threshold, and 256 KiB sustained-backlog disconnect threshold.
+- Slow clients are disconnected with WebSocket close code 1013 only after >256 KiB remains queued for 40 consecutive server ticks (2 seconds). The streak resets when bufferedAmount drops back to 256 KiB or below. Snapshots are skipped above 64 KiB.
+- Local verification in the isolated Node workspace: npm test passed 52/52, npm run build succeeded, node --check server/index.js succeeded, and git diff --check succeeded. This is unit-level verification; live WebSocket integration and network load tests remain outstanding.
+- GitHub CI and Preview status pending until this update is pushed. PR #1 remains Draft; do not merge before manual browser/two-client QA.
