@@ -106,6 +106,7 @@ export class VercelRoomRuntime {
     const local = { socket, backpressure: {} };
     this.localSockets.set(playerId, local);
     let joined = false;
+    let left = false;
     let eventChain = Promise.resolve();
 
     socket.on('message', (raw) => {
@@ -118,6 +119,8 @@ export class VercelRoomRuntime {
     });
 
     const leave = () => {
+      if (left) return;
+      left = true;
       this.localSockets.delete(playerId);
       if (!joined) return;
       eventChain = eventChain.then(() => this.coordinator.appendEvent(this.roomId, {
