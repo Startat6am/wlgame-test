@@ -347,3 +347,12 @@ This section supersedes earlier notes above that said no Redis database was conf
 - Vercel Preview for the exact commit is building: deployment `dpl_4HMVc2nBj1xsd9j4XHC2LbbQ6RGE`, URL https://wlgame-test-734tgytye-callback5.vercel.app. Do not ask for testing until it is READY.
 - CI status for this exact commit has not yet been returned by the workflow-run lookup; verify the commit status checks.
 - Manual single-character movement QA is still required. Two-player testing remains explicitly deferred. PR #1 remains Draft and unmerged.
+
+
+## 2026-11-26 — локальная коррекция движения после повторной жалобы на рывки
+- FPS был хорошим, но игрок продолжал заметно дёргаться после первого client prediction исправления.
+- Причина в текущей схеме: 20 Hz authoritative snapshots обновляли correction vector во время активного движения, из-за чего запаздывающая серверная позиция вмешивалась в локальную траекторию.
+- Изменено: локальная коррекция теперь откладывается, пока есть ненулевой input; после отпускания управления применяется медленный collision-safe blend (350 ms).
+- Добавлен тест, подтверждающий, что серверная коррекция не меняет движение при удерживаемом input.
+- Требуется CI и ручная проверка одного персонажа после публикации Preview. Не считать исправление подтверждённым до такой проверки.
+- Второго игрока не тестировать; PR #1 остаётся Draft и не сливать.
