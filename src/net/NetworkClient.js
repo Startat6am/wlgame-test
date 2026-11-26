@@ -21,9 +21,15 @@ export class NetworkClient {
         this.socket.readyState === WebSocket.CONNECTING)) return;
     this.clearReconnectTimer();
 
+    const configuredUrl = import.meta.env.VITE_WS_SERVER_URL;
+    if (window.location.protocol === 'https:' && !configuredUrl?.trim()) {
+      this.onStatus('Локальная игра');
+      return;
+    }
+
     let url;
     try {
-      url = resolveWebSocketUrl(window.location, import.meta.env.VITE_WS_SERVER_URL);
+      url = resolveWebSocketUrl(window.location, configuredUrl);
     } catch {
       this.onStatus('Локальная игра');
       return;
