@@ -20,6 +20,17 @@ test('uses Vercel same-origin WebSocket route on HTTPS and local port in develop
   );
 });
 
+test('resolves a same-origin route for Preview and production environments', () => {
+  assert.equal(
+    resolveWebSocketUrl({ protocol: 'https:', hostname: 'preview.example', host: 'preview.example' }, '/api/ws'),
+    'wss://preview.example/api/ws'
+  );
+  assert.equal(
+    resolveWebSocketUrl({ protocol: 'http:', hostname: 'localhost:5173', host: 'localhost:5173' }, '/api/ws'),
+    'ws://localhost:5173/api/ws'
+  );
+});
+
 test('blank configuration uses the environment-appropriate fallback', () => {
   assert.equal(
     resolveWebSocketUrl({ protocol: 'https:', hostname: 'game.example', host: 'game.example' }, '  '),
