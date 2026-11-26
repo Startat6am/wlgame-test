@@ -306,3 +306,10 @@ A phase is complete only when:
 - [x] Local verification: `npm test` passed 80/80 and `npm run build` succeeded (known non-fatal Vite chunk warning remains).
 - [ ] Verify CI and wait for the Preview deployment of commit `146185d74b3a381849259562126d164dae0a1d95` to reach READY.
 - [ ] Manually test one character moving continuously and around obstacles; inspect p95/p99. Do not start two-player testing until single-player movement is confirmed smooth.
+
+
+### Movement smoothness follow-up (2026-11-26)
+- Further reduce visible local movement jitter: do not apply delayed authoritative position corrections while movement input is held.
+- Blend the latest pending server correction over 350 ms after input release.
+- Added regression coverage for active-input correction suppression.
+- Pending: CI, Preview deployment, and manual single-player validation. No two-player testing.
