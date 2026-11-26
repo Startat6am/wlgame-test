@@ -215,3 +215,12 @@ Do not reconstruct work from chat history until the repository and branch have b
 - Current branch/PR head at verification: `d778c52d6a17ae69f73a610f451975b88fc44446`; PR #1 remains open and Draft.
 - GitHub Actions WLGame CI run #89 (ID `45762329119`) completed SUCCESS on this exact HEAD. The job passed `npm install`, `npm run build`, `npm test`, and `node --check server/index.js`.
 - Vercel Preview deployment `dpl_6ny2i5AbnHx2EXbvurykKkdso9hq` is READY for the exact HEAD. Preview alias: https://wlgame-test-git-feature-isometric-arena-callback5.vercel.app. This is build/deploy verification only; no manual gameplay or performance baseline is claimed.
+
+
+## Arena collision regression coverage — 2026-11-26
+
+- Added `resolveCircleAgainstArena` to `src/game/combat/combat-math.js`; it clamps a moving circle to world bounds, resolves obstacle circles, and handles projection oscillation in tight corners with a deterministic perimeter candidate search.
+- Reused the resolver for offline training-target knockback and authoritative server player movement. The server reuses the shared immutable obstacle objects; no per-tick obstacle conversion is performed. Fireball swept collision behavior is unchanged.
+- Added four regression tests: arena boundary clamp, tangential movement along an obstacle edge, resolution of a corner formed by overlapping obstacles, and invalid world dimensions.
+- Local verification in a clean ephemeral Node box: `npm test` passed 36/36, `npm run build` succeeded, and `node --check server/index.js` succeeded. Known Vite large-chunk warning remains (~1.51 MB minified / 349 KB gzip).
+- Commit/CI/Preview verification pending. Manual browser and two-client collision checks remain required; PR #1 remains Draft.
