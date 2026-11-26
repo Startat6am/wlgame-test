@@ -168,4 +168,4 @@ setInterval(() => {
   sendSnapshot();
 }, 1000 / TICK_RATE);
 
-server.on('listening', () => console.log(`WLGame WebSocket server listening on :${PORT}`));
+server.on('listening', () => console.log(`WLGame WebSocket server listening on :${server.address().port}`));
