@@ -144,8 +144,7 @@ export class RedisRoomCoordinator {
   }
 
   async publishInput(roomId, event) {
-    const keys = this.keys(roomId);
-    return this.redis.publish(keys.channel, event);
+    return this.appendEvent(roomId, event);
   }
 }
 
