@@ -54,32 +54,50 @@ export class VercelRoomRuntime {
     if (this.started) return this.subscriptionReady;
     this.started = true;
     this.stopping = false;
-    await this.connectSubscription();
+    try {
+      await this.connectSubscription();
+    } catch (error) {
+      this.started = false;
+      throw error;
+    }
     this.timer = this.setIntervalImpl(() => {
       this.tickOnce().catch((error) => this.onError(error));
     }, 1000 / GAME_CONFIG.tickRate);
   }
 
   async connectSubscription() {
-    this.subscriptionAbort = new AbortController();
     let resolveReady;
     let rejectReady;
+    let ready = false;
     this.subscriptionReady = new Promise((resolve, reject) => {
       resolveReady = resolve;
       rejectReady = reject;
     });
-    this.subscriptionTask = this.redis.subscribe(this.coordinator.keys(this.roomId).channel, {
-      signal: this.subscriptionAbort.signal,
-      onReady: resolveReady,
-      onMessage: (event) => this.handlePublishedEvent(event)
-    }).then(() => {
-      if (!this.stopping) throw new Error('Redis snapshot subscription ended unexpectedly');
-    }).catch((error) => {
-      if (!this.stopping) {
-        this.onError(error);
-        rejectReady(error);
+    this.subscriptionTask = (async () => {
+      while (!this.stopping) {
+        const controller = new AbortController();
+        this.subscriptionAbort = controller;
+        try {
+          await this.redis.subscribe(this.coordinator.keys(this.roomId).channel, {
+            signal: controller.signal,
+            onReady: () => {
+              ready = true;
+              resolveReady();
+            },
+            onMessage: (event) => this.handlePublishedEvent(event)
+          });
+          if (!this.stopping) throw new Error('Redis snapshot subscription ended unexpectedly');
+        } catch (error) {
+          if (this.stopping) break;
+          this.onError(error);
+          if (!ready) {
+            rejectReady(error);
+            return;
+          }
+          await new Promise((resolve) => setTimeout(resolve, 500));
+        }
       }
-    });
+    })();
     await this.subscriptionReady;
   }
 
@@ -111,11 +129,16 @@ export class VercelRoomRuntime {
 
     try {
       await this.start();
-      await this.coordinator.appendEvent(this.roomId, {
+      eventChain = eventChain.then(() => this.coordinator.appendEvent(this.roomId, {
         type: 'join', playerId, receivedAt: this.now()
-      });
+      }));
+      await eventChain;
       joined = true;
-      if (socket.readyState === 1) socket.send(JSON.stringify({ type: 'welcome', id: playerId }));
+      if (socket.readyState === 1) {
+        socket.send(JSON.stringify({ type: 'welcome', id: playerId }));
+      } else {
+        leave();
+      }
     } catch (error) {
       this.localSockets.delete(playerId);
       socket.close(1011, 'Realtime backend unavailable');
