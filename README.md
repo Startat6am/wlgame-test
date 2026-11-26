@@ -4,11 +4,10 @@ Browser-based 2D arena prototype inspired by the mechanics of Warcraft III custo
 
 ## Current milestone
 
-- Phaser 3 arena prototype with a controllable placeholder hero.
-- Keyboard (WASD / arrows) and touch joystick movement.
-- Responsive canvas and mobile-friendly layout.
-- Optional WebSocket connection to a Node.js server; local movement remains available when the server is offline.
-- Server-side validation of movement input and authoritative position simulation foundation.
+- Phaser 3 isometric arena prototype with keyboard and touch controls.
+- Offline training target and authoritative WebSocket combat simulation.
+- Node.js WebSocket transport for local development.
+- Vercel Functions WebSocket migration in progress; cross-instance room coordination is the next infrastructure milestone.
 
 > This is a technical foundation, not a recreation of the original map's complete balance or content. Original Warlock Arena 0.88 mechanics still need to be documented from a reliable map/version reference before implementing heroes, spells, items, and progression.
 
@@ -26,45 +25,59 @@ npm run dev
 
 Open the Vite URL shown in the terminal.
 
-In another terminal, start the WebSocket server:
+In another terminal, start the local authoritative WebSocket server:
 
 ```bash
 npm run server
 ```
 
-The client connects to `ws://localhost:2567` when available. Without it, the prototype runs in local mode.
+The development client connects to `ws://localhost:2567`. Without the server, the prototype remains playable in local mode.
 
-For a deployed client, set `VITE_WS_SERVER_URL` to the persistent WebSocket server URL (for example, `wss://your-host.example`) in the deployment environment. If unset, the client falls back to the current hostname on port `2567`. See `.env.example`.
+## WebSocket deployment direction
+
+Vercel Functions now support native WebSocket connections. The target architecture is:
+
+- Vercel Function `/api/ws`: WebSocket transport and local connection fan-out.
+- Upstash Redis: cross-instance message fan-out, room coordination, and recoverable authoritative state.
+- `server/game-simulation.js`: transport-independent authoritative 20 Hz game simulation, shared by local and Vercel adapters.
+
+Vercel pins each WebSocket connection to one Function instance and closes it at the Function's maximum duration. The client now reconnects with bounded exponential backoff. Because different players can land on different instances, instance-local memory alone is not a valid multiplayer state store.
+
+**Migration status:** simulation extraction and client reconnect support are implemented and locally verified. The Vercel WebSocket endpoint and Redis-backed cross-instance coordinator are not enabled yet. No Redis database is currently connected to this project; do not deploy an instance-local-only multiplayer endpoint as if it supported cross-instance matches.
+
+For an explicitly configured external development server, set `VITE_WS_SERVER_URL` to its `ws://` or `wss://` URL. See `.env.example`.
 
 ## Controls
 
 - Desktop: WASD or arrow keys.
 - Mobile: hold and drag the virtual joystick at the lower-left of the arena.
-- Use the browser's device toolbar or a phone to test touch controls.
+- FIRE: tap to cast in the current facing direction or drag to aim before release.
 
 ## Project layout
 
 ```text
-client/
-  src/
-    game/
-      scenes/
-      input/
-    net/
+api/                  # planned Vercel Function entrypoints
 server/
+  game-simulation.js  # authoritative simulation, independent of transport
+  index.js            # local Node.js WebSocket adapter
+src/
+  game/
+  net/
 .github/workflows/
 ```
 
 ## Architecture notes
 
 - The client sends normalized movement intent, not trusted world coordinates.
-- The server validates input, clamps movement, and broadcasts snapshots.
-- Gameplay rules should move to shared/server-side modules as combat is implemented.
-- PostgreSQL persistence, rooms, matchmaking, bots, heroes, abilities, and items are intentionally not faked in this first milestone.
+- The authoritative simulation validates input, resolves movement and projectile collision, and produces snapshots.
+- Network simulation runs at 20 Hz; remote actors are interpolated client-side between snapshots.
+- The Vercel adapter must use shared coordination/state across Function instances before it is considered multiplayer-ready.
+- PostgreSQL persistence, accounts, matchmaking, bots, heroes, abilities, and items remain separate roadmap work.
 
 ## Scripts
 
 - `npm run dev` — Vite development server.
 - `npm run build` — production client build.
 - `npm run preview` — preview production build.
-- `npm run server` — WebSocket server.
+- `npm run server` — local WebSocket server.
+- `npm test` — unit and WebSocket integration tests.
