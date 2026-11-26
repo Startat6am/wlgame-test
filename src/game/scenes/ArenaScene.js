@@ -518,13 +518,8 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   update(_time, delta) {
-    // Poll the active FIRE pointer every render frame. Pointer events remain a
-    // low-latency fast path, but the guide never waits for network snapshots/ticks.
-    if (this.skillButtonPointerId !== null) {
-      const pointer = this.input.pointers.find((candidate) => candidate.id === this.skillButtonPointerId);
-      if (pointer && this.skillButtonOrigin) this.updateSkillButtonAim(pointer);
-    }
-
+    // FIRE aim is updated from local pointer events; do not poll/redraw every frame.
+    // Release samples the final pointer coordinates before casting.
     if (this.trainingTarget && !this.network.connected) {
       this.trainingTarget = updateTrainingTarget(this.trainingTarget, delta, this.time.now, WORLD, this.obstacleCircles);
       this.updateTrainingTargetView();
