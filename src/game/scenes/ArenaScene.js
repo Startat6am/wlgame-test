@@ -526,6 +526,13 @@ export class ArenaScene extends Phaser.Scene {
     } else if (!connected && !this.trainingTargetSprite && this.trainingTarget) {
       this.createTrainingTargetView();
     }
+    // Online movement is driven by local prediction and the shared arena resolver.
+    // Disable Arcade integration/collisions for the hidden physics sprite while online;
+    // otherwise Arcade can independently move or depenetrate the same body each tick.
+    if (this.hero?.body) {
+      this.hero.setVelocity(0, 0);
+      this.hero.body.enable = !connected;
+    }
     const label = document.getElementById('connection-label');
     const dot = document.getElementById('connection-dot');
     if (label) label.textContent = status;
