@@ -1,5 +1,12 @@
 export function resolveWebSocketUrl(location, configuredUrl = '') {
   if (typeof configuredUrl === 'string' && configuredUrl.trim()) {
+    if (configuredUrl.trim().startsWith('/')) {
+      if (!location || typeof location.host !== 'string' || typeof location.protocol !== 'string') {
+        throw new TypeError('A browser location is required for a same-origin WebSocket path');
+      }
+      const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      return `${protocol}//${location.host}${configuredUrl.trim()}`;
+    }
     let parsed;
     try {
       parsed = new URL(configuredUrl.trim());
