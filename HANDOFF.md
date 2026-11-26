@@ -319,3 +319,13 @@ This section supersedes earlier notes above that said no Redis database was conf
 
 - Final CI checkpoint after the latest docs commit: branch HEAD `3ae8c7f123c1a1de80271b91ac5c870e64874964`, GitHub Actions run #160 (`45773485362`) passed all steps: install, Vite build, `npm test`, and `node --check server/index.js`.
 - Additional live Redis check on a fresh test room: lease acquire returned `verify:1`; token renewal succeeded; release succeeded; a renewal using the released token was rejected (`0`). This confirms lease fencing/release behavior against the live service.
+
+
+## Single-player movement jitter fix — 2026-11-26
+
+- User reported strong movement spikes and explicitly asked not to test with two players yet. Priority is now smooth one-player movement; defer multi-client tests.
+- Root cause found by source inspection: `ArenaScene.applySnapshot` directly called `hero.setPosition(serverX, serverY)` for every 20 Hz snapshot. Local player therefore moved in visible 50 ms steps and inherited any Redis/Vercel snapshot jitter. Existing 100 ms interpolation applied only to remote players.
+- Implemented render-frame local prediction in `src/game/scenes/ArenaScene.js` using the same `resolveCircleAgainstArena` collision resolver as the server. Authoritative snapshots now update a correction offset that decays exponentially over 100 ms rather than teleporting the player. First snapshot seeds the authoritative spawn; reconnect welcome resets prediction initialization.
+- Added `src/net/local-prediction.js` and `src/net/local-prediction.test.js` with coverage for initial spawn, frame-rate movement, smooth reconciliation, bounds, and large frame-delta capping. Existing `npm test` glob already includes `src/net/*.test.js`.
+- Code commit: `e55d52e72f4d40b738f83682e26f4766af1482d2`; helper commit: `642dc6378c97f35742b5960290a10d9cbd06f56d`; tests commit: `711c252a0c38907ef425cce35768cafd75b75cad`.
+- This is a code-level fix based on inspection, not yet verified in a browser or deployed. CI/build and a one-client Preview check remain pending. Do not claim the spikes are resolved until the user confirms smooth movement. No two-player test has been run or requested.
