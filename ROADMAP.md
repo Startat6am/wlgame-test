@@ -67,7 +67,9 @@ This roadmap prioritizes a stable playable core first, then expands gameplay and
 - [x] Support an explicit client WebSocket endpoint through `VITE_WS_SERVER_URL` with a same-host development fallback.
 - [ ] Add rooms, lobby, ready state, match lifecycle, and disconnect handling.
 - [x] Add a 1 KB WebSocket payload cap, per-player input/cast rate limits, and snapshot backpressure protection (skip stale snapshots above 64 KB queued).
-- [x] Extract WebSocket protocol parsing and rate limits into pure unit-testable functions; test malformed/oversized/invalid payloads, input/cast floods, and slow-client backpressure policy. Disconnect after >256 KiB queued for 40 consecutive ticks (2 seconds). [ ] Add live WebSocket integration and load tests.
+- [x] Extract WebSocket protocol parsing and rate limits into pure unit-testable functions; test malformed/oversized/invalid payloads, input/cast floods, and slow-client backpressure policy. Disconnect after >256 KiB queued for 40 consecutive ticks (2 seconds).
+- [x] Add a live WebSocket integration test for malformed JSON, movement flood limiting, and oversized-frame rejection.
+- [ ] Add multi-client concurrency/load tests and exercise slow-client disconnection under real socket backpressure.
 - [ ] Load-test multiple concurrent matches.
 - [ ] Measure latency, jitter, snapshot bandwidth, and server event-loop lag.
 
@@ -231,5 +233,13 @@ A phase is complete only when:
 - Malformed JSON, oversized payloads, unknown messages, non-finite values, and messages above configured per-player rates are ignored.
 - Snapshot delivery skips clients above 64 KiB buffered. A client above 256 KiB for 40 consecutive 20 Hz ticks (2 seconds) is closed with WebSocket code 1013; the streak resets as soon as the queue drains below the critical threshold.
 - Added seven deterministic unit tests covering protocol validation, flood limits, skip threshold, disconnect threshold, recovery, and invalid backpressure values.
-- Live WebSocket integration tests and concurrent-client load tests remain open; unit tests do not prove behavior under real network congestion.
+- Added a child-process WebSocket integration test that starts the real server on an ephemeral port, confirms malformed JSON is ignored, verifies the 31st input in a one-second window is dropped, and confirms oversized frames close with code 1009 while the server stays alive. Multi-client concurrency/load tests and real slow-socket backpressure simulation remain open.
 - Local verification: npm test passed 52/52, npm run build succeeded, node --check server/index.js succeeded, and git diff --check succeeded. GitHub Actions WLGame CI run #102 (ID 45766258303) passed on server code commit cad2fd6522523c6a219951a8f97a70a4a1b4eb81; CI run #104 (ID 45766338860) passed on documentation HEAD 53298e309f33ec8ac3ae724b4b3122eb45c2811c. Vercel Preview deployment dpl_F7NdfP753Hdb5CYpBLGNnNYVftn1 is READY for that exact HEAD. Vite's known large-chunk warning remains.
+
+
+## WebSocket integration smoke — 2026-11-26
+
+- Added server/server.integration.test.js; it launches the actual Node WebSocket server on an ephemeral port and exercises welcome/snapshot delivery, malformed JSON handling, the 30 input/sec rate limit, and the 1 KiB max-payload close behavior.
+- Updated the listening log to report the assigned ephemeral port and included server/*.test.js in npm test.
+- Local verification: npm test passed 53/53, npm run build succeeded, node --check server/index.js succeeded, and git diff --check succeeded. The Vite large-chunk warning remains non-fatal.
+- This is a single-client protocol smoke test. Multi-client concurrency/load tests and slow-client queue saturation still require dedicated test harnesses.
