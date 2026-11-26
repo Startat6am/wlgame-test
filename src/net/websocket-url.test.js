@@ -4,15 +4,15 @@ import { resolveWebSocketUrl } from './websocket-url.js';
 
 test('uses explicit secure WebSocket URL when configured', () => {
   assert.equal(
-    resolveWebSocketUrl({ protocol: 'https:', hostname: 'game.example' }, 'wss://arena.example/ws'),
+    resolveWebSocketUrl({ protocol: 'https:', hostname: 'game.example', host: 'game.example' }, 'wss://arena.example/ws'),
     'wss://arena.example/ws'
   );
 });
 
-test('falls back to same-host WebSocket on HTTPS and HTTP', () => {
+test('uses Vercel same-origin WebSocket route on HTTPS and local port in development', () => {
   assert.equal(
-    resolveWebSocketUrl({ protocol: 'https:', hostname: 'game.example' }),
-    'wss://game.example:2567'
+    resolveWebSocketUrl({ protocol: 'https:', hostname: 'game.example', host: 'game.example:8443' }),
+    'wss://game.example:8443/api/ws'
   );
   assert.equal(
     resolveWebSocketUrl({ protocol: 'http:', hostname: 'localhost' }),
@@ -20,10 +20,10 @@ test('falls back to same-host WebSocket on HTTPS and HTTP', () => {
   );
 });
 
-test('blank configuration uses the development fallback', () => {
+test('blank configuration uses the environment-appropriate fallback', () => {
   assert.equal(
-    resolveWebSocketUrl({ protocol: 'https:', hostname: 'game.example' }, '  '),
-    'wss://game.example:2567'
+    resolveWebSocketUrl({ protocol: 'https:', hostname: 'game.example', host: 'game.example' }, '  '),
+    'wss://game.example/api/ws'
   );
 });
 
