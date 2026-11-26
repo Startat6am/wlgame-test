@@ -94,8 +94,8 @@ test('parses CRLF-delimited Upstash SSE frames', async () => {
       status: 200,
       body: new ReadableStream({
         start(controller) {
-          controller.enqueue(encoder.encode('data: subscribe,room,1\\r\\n\\r\\n'));
-          controller.enqueue(encoder.encode('data: message,room,{"type":"tick"}\\r\\n\\r\\n'));
+          controller.enqueue(encoder.encode('data: subscribe,room,1\r\n\r\n'));
+          controller.enqueue(encoder.encode('data: message,room,{"type":"tick"}\r\n\r\n'));
           controller.close();
         }
       })
