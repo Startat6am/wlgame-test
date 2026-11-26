@@ -1,5 +1,5 @@
 const MAX_PREDICTION_DELTA_MS = 50;
-const DEFAULT_CORRECTION_TIME_MS = 100;
+const DEFAULT_CORRECTION_TIME_MS = 350;
 
 export function createLocalPredictionState() {
   return {
@@ -24,6 +24,9 @@ export function reconcileLocalPrediction(state, predicted, authoritative) {
     return { x: authoritative.x, y: authoritative.y };
   }
 
+  // Keep the newest server error as a pending correction. Applying it while
+  // the player is actively moving makes 20 Hz snapshots fight render-frame
+  // prediction and produces visible micro-teleports.
   state.correctionX = authoritative.x - predicted.x;
   state.correctionY = authoritative.y - predicted.y;
   return null;
@@ -57,15 +60,22 @@ export function stepLocalPrediction(
     obstacles
   );
 
-  const blend = 1 - Math.exp(-elapsed / correctionTimeMs);
-  const corrected = resolvePosition(
-    predicted.x + state.correctionX * blend,
-    predicted.y + state.correctionY * blend,
-    radius,
-    world,
-    obstacles
-  );
-  state.correctionX *= 1 - blend;
-  state.correctionY *= 1 - blend;
-  return corrected;
+  // Never steer the locally controlled character toward delayed server
+  // snapshots while the movement stick/keys are held. Reconcile only after
+  // input is released, using a deliberately slow, collision-safe blend.
+  if (directionLength <= 0.001) {
+    const blend = 1 - Math.exp(-elapsed / correctionTimeMs);
+    const corrected = resolvePosition(
+      predicted.x + state.correctionX * blend,
+      predicted.y + state.correctionY * blend,
+      radius,
+      world,
+      obstacles
+    );
+    state.correctionX *= 1 - blend;
+    state.correctionY *= 1 - blend;
+    return corrected;
+  }
+
+  return predicted;
 }
