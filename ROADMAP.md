@@ -288,3 +288,12 @@ A phase is complete only when:
 
 - Latest CI after documentation updates: run #160 (`45773485362`) passed on HEAD `3ae8c7f123c1a1de80271b91ac5c870e64874964`.
 - Live Redis lease verification also confirmed token renewal, release, and rejection of a stale token after release.
+
+
+## Local movement jitter investigation — 2026-11-26
+
+- User reports strong movement spikes in the deployed Preview. Two-player testing is explicitly deferred until single-player movement is smooth.
+- Code inspection found the local player was hard-snapped to every 20 Hz server snapshot, while the Vercel room leader advances only after sequential Redis REST/Streams/commit work. This makes visible movement inherit snapshot/network jitter; the remote-player interpolation buffer did not cover the local player.
+- Added client-side local movement prediction at render-frame cadence using the same arena circle resolver as the server, plus a 100 ms exponential reconciliation toward authoritative snapshots. First authoritative snapshot seeds the spawn position; reconnect welcome resets prediction initialization.
+- Added deterministic unit coverage for spawn seeding, per-frame movement, smooth correction, bounds, and long-frame delta capping.
+- Next gate: run CI/build, then single-client Preview movement test and inspect p95/p99 frame time. Do not start two-player or cross-instance testing until this gate passes.
