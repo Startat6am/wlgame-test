@@ -297,3 +297,17 @@ Do not reconstruct work from chat history until the repository and branch have b
 - Manual browser/device QA remains outstanding. The Vercel project has SSO protection on Preview deployments, so use authenticated Preview access or a controlled custom-domain test. PR #1 remains Draft.
 
 - Region choice: Vercel project default is `iad1` (Washington, D.C.), but Hobby can select one Function region. `vercel.json` now pins only `api/ws.js` to `arn1` (Stockholm). Upstash's documented AWS regions do not include Stockholm; use `eu-central-1` (Frankfurt) as the nearest supported primary region when provisioning a free Redis database. This keeps the authoritative Function close to the Stockholm client and Redis one nearby EU hop away. See official Vercel region docs and Upstash region list.
+
+
+## Live infrastructure checkpoint — 2026-11-26 10:10 Stockholm
+
+This section supersedes earlier notes above that said no Redis database was configured.
+
+- Created free Upstash Redis database `wlgame-realtime` (`6c89f922-0fdb-4d21-bd4e-281245798ca3`) in Frankfurt (`eu-central-1`). No paid plan was selected; keep usage within free quota and do not upgrade without approval.
+- Configured Vercel Preview-only environment variables for branch `feature/isometric-arena`: `UPSTASH_REDIS_REST_URL` (encrypted), `UPSTASH_REDIS_REST_TOKEN` (sensitive/server-only), and `VITE_WS_SERVER_URL=/api/ws`. No production variables or production aliases were changed.
+- Set the Vercel project Function region to Stockholm (`arn1`) and changed `vercel.json` to declare top-level `regions: ["arn1"]` plus `api/ws.js` maxDuration 300. Note: the first fresh deployment (`dpl_DWBq89ThqEJNusKcpjKQYkWK7SPr`) was built in `iad1` because it was created before the project-region change/top-level region config; it is READY but not proof that `arn1` is active. Redeploy latest branch HEAD and inspect `regions`/build logs.
+- Live Upstash command checks on the provisioned DB succeeded for EVAL lease acquisition (monotonic epoch/token), XADD, XREAD, fenced EVAL tick commit, state GET, and publish command acceptance. A first tick-commit attempt was rejected after the short test lease expired; reacquiring the lease and committing immediately succeeded. This confirms Lua/Streams/state operations against the live service, not the entire runtime.
+- PUBLISH returned subscriber count 0 in the isolated command test; actual SSE delivery/reconnect remains unverified. Do not mark Pub/Sub SSE complete until a real subscriber observes a message.
+- Latest exact PR head before the most recent docs/config commits: `11a3c9863ebf10ec7555f867c24af1d57cf5376a`; GitHub Actions run #154 passed build and tests on that SHA. Current HEAD has moved with subsequent docs/config commits; verify latest CI again.
+- Preview deployment for `11a3c986...` was created and reached READY at `https://wlgame-test-cfdidpn2r-callback5.vercel.app`, but it used `iad1` and predates the top-level region config commit `f0d53e1...`. Redeploy after current docs commits to test the actual latest source and Preview env vars.
+- PR #1 body has been corrected to describe the actual provisioned free DB and Preview env setup. PR remains Draft/open. No manual desktop/mobile QA or two-client cross-instance gameplay has been completed.
