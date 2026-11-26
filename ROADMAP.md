@@ -34,7 +34,7 @@ This roadmap prioritizes a stable playable core first, then expands gameplay and
 
 ### P0 — Performance foundation and playable combat
 - [ ] Establish repeatable desktop/mobile performance baselines.
-- [ ] Add frame-time history and p95/p99 reporting.
+- [x] Add a 120-sample rolling frame-time history and HUD p95/p99 reporting; same-device baseline capture remains open.
 - [ ] Verify the joystick dirty-render and 20 Hz input changes in browser.
 - [x] Add swept segment/circle collision tests; stop offline Fireballs at static arena obstacles.
 - [x] Apply matching circular obstacle resolution to authoritative server player movement and swept obstacle collision to server Fireballs.
@@ -185,3 +185,12 @@ A phase is complete only when:
 - Follow-up: removed per-frame FIRE pointer polling after browser-freeze report; event-driven client aim and release resampling remain. Commit `deb3dac125da76a29b3c52a5c7d222521e4c9535`. Manual QA still pending.
 
 - Fixed FIRE guide anchoring during movement: retain the aim direction, but update the guide origin when the hero moves. Redraw is position-change-driven, not pointer polling. Commit `20115b9170ff6db7c4dde5deef14f8ea501374f4`; verify manually.
+
+
+## Frame-time diagnostics — 2026-11-26
+
+- [x] Add a fixed-capacity 120-sample ring buffer for frame deltas.
+- [x] Show FPS plus rolling p95/p99 frame time in the HUD, refreshed twice per second; percentile sorting is kept out of the per-frame path.
+- [x] Add automated tests for percentile values, ring-buffer wraparound, empty history, and invalid inputs.
+- [ ] Capture repeatable desktop and representative-phone baselines under idle, movement, and FIRE hold/drag scenarios.
+- This instrumentation provides evidence for future diagnosis; it is not itself a measured performance improvement.
