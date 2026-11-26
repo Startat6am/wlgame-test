@@ -2,7 +2,10 @@ import { WebSocketServer } from 'ws';
 import { randomUUID } from 'node:crypto';
 import { resolveCircleAgainstArena, segmentIntersectsCircle } from '../src/game/combat/combat-math.js';
 import { ARENA_OBSTACLES } from '../src/game/data/arena.js';
-import { consumeRateLimit } from '../src/net/rate-limit.js';
+import {
+  getSnapshotDeliveryDecision,
+  parseClientMessage
+} from '../src/net/websocket-protocol.js';
 
 const PORT = Number(process.env.PORT ?? 2567);
 const TICK_RATE = 20;
@@ -15,7 +18,6 @@ const OBSTACLE_CIRCLES = ARENA_OBSTACLES;
 const players = new Map();
 const projectiles = new Map();
 const server = new WebSocketServer({ port: PORT, maxPayload: 1024 });
-const SNAPSHOT_BACKPRESSURE_LIMIT = 64 * 1024;
 
 function sendSnapshot() {
   const payload = JSON.stringify({
@@ -27,8 +29,14 @@ function sendSnapshot() {
   });
   for (const client of server.clients) {
     if (client.readyState !== 1) continue;
-    // Drop an obsolete snapshot rather than queueing an ever-growing backlog.
-    if (client.bufferedAmount > SNAPSHOT_BACKPRESSURE_LIMIT) continue;
+    // Skip stale snapshots while the socket drains; disconnect clients that
+    // remain critically backed up for two seconds (40 server ticks).
+    const delivery = getSnapshotDeliveryDecision(client, client.bufferedAmount);
+    if (delivery.disconnect) {
+      client.close(1013, 'Slow consumer');
+      continue;
+    }
+    if (delivery.skip) continue;
     client.send(payload);
   }
 }
@@ -55,34 +63,25 @@ server.on('connection', (socket) => {
   socket.send(JSON.stringify({ type: 'welcome', id }));
 
   socket.on('message', (raw) => {
-    if (raw.length > 1024) return;
-    let message;
-    try { message = JSON.parse(raw.toString()); } catch { return; }
+    const message = parseClientMessage(raw, player, Date.now());
+    if (!message) return;
 
     if (message.type === 'input') {
-      if (!consumeRateLimit(player.inputRate, Date.now(), 30, 1000)) return;
-      const x = Number(message.x);
-      const y = Number(message.y);
-      if (!Number.isFinite(x) || !Number.isFinite(y)) return;
-      player.inputX = Math.max(-1, Math.min(1, x));
-      player.inputY = Math.max(-1, Math.min(1, y));
+      player.inputX = message.x;
+      player.inputY = message.y;
       if (Math.hypot(player.inputX, player.inputY) > 0.001) {
         player.facingX = player.inputX;
         player.facingY = player.inputY;
       }
-      const length = Math.hypot(player.inputX, player.inputY);
-      if (length > 1) { player.inputX /= length; player.inputY /= length; }
       return;
     }
 
     if (message.type === 'cast' && message.ability === 'fireball') {
-      if (!consumeRateLimit(player.castRate, Date.now(), 3, 1000)) return;
-      const angle = Number(message.angle);
       const now = Date.now();
-      if (!Number.isFinite(angle) || now - player.lastFireballAt < FIREBALL.cooldownMs) return;
+      if (now - player.lastFireballAt < FIREBALL.cooldownMs) return;
       player.lastFireballAt = now;
-      const directionX = Math.cos(angle);
-      const directionY = Math.sin(angle);
+      const directionX = Math.cos(message.angle);
+      const directionY = Math.sin(message.angle);
       const projectileId = randomUUID();
       projectiles.set(projectileId, {
         id: projectileId, ownerId: player.id,
