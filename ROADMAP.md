@@ -42,7 +42,8 @@ This roadmap prioritizes a stable playable core first, then expands gameplay and
 - [x] Implement an offline training target with swept Fireball hits, health/damage, directional knockback, death, and timed respawn; pure combat lifecycle covered by automated tests. Manual gameplay tuning/verification remains pending.
 - [x] Halve Fireball knockback in both offline and authoritative server combat (260 → 130 base impulse).
 - [x] Show a translucent 100-screen-pixel direction guide from the player while the FIRE button is held; update it from the same aim-stick vector and sample the exact final pointer position on release before casting.
-- [ ] Add collision tests and gameplay regression tests.
+- [x] Add collision regression tests for arena boundaries, tangential obstacle-edge movement, overlapping-obstacle corners, and invalid arena dimensions; share the same arena movement resolver between offline target motion and authoritative server player movement.
+- [ ] Manually verify collision behavior in desktop/mobile browsers and a two-client network session.
 - [ ] Verify mobile portrait and landscape behavior.
 - [ ] Fix any measured performance regressions before expanding content.
 
@@ -194,3 +195,12 @@ A phase is complete only when:
 - [x] Add automated tests for percentile values, ring-buffer wraparound, empty history, and invalid inputs.
 - [ ] Capture repeatable desktop and representative-phone baselines under idle, movement, and FIRE hold/drag scenarios.
 - This instrumentation provides evidence for future diagnosis; it is not itself a measured performance improvement.
+
+
+## Arena collision regression coverage — 2026-11-26
+
+- Added `resolveCircleAgainstArena` as a shared pure resolver for world-bound clamping and circular obstacle collision. It is used by offline training-target knockback and authoritative server player movement.
+- Added a deterministic perimeter escape search for the case where sequential circle projections oscillate between overlapping obstacle circles in a narrow corner.
+- Added tests for world boundaries, unobstructed tangential movement, a corner between overlapping rocks, and invalid world dimensions.
+- Local verification: `npm test` passed 36/36; `npm run build` succeeded; `node --check server/index.js` succeeded. Vite still reports the known non-fatal large JavaScript chunk warning (~1.51 MB minified / 349 KB gzip).
+- Automated tests do not replace live browser/two-client gameplay QA.
