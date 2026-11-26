@@ -1,8 +1,8 @@
 {
+  "regions": ["arn1"],
   "functions": {
     "api/ws.js": {
-      "maxDuration": 300,
-      "regions": ["arn1"]
+      "maxDuration": 300
     }
   }
 }
