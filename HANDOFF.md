@@ -336,3 +336,14 @@ This section supersedes earlier notes above that said no Redis database was conf
 - GitHub Actions WLGame CI run #163 (`45851090397`) passed for code commit `711c252a0c38907ef425cce35768cafd75b75cad`: install, Vite build, `npm test`, and server syntax check all succeeded. The following two commits only updated documentation.
 - Vercel automatically created Preview deployment `dpl_16GDCXt53aBGuJt8yYbHeG7dPmZx` for latest branch HEAD `3749b46a00b53b8e32505be8decedb723a03173c`, but it remains `QUEUED` at last check. Do not send the user to this deployment as the new fix until it reaches READY.
 - The previously READY Preview still contains the old hard-snap movement behavior. The new local prediction change has not yet been browser-tested or deployed. Single-player Preview QA is the next gate; no two-player test has been run.
+
+
+## Local movement jitter follow-up — 2026-11-26
+
+- User clarified the reported issue is positional jitter, not low FPS; FPS had been good. Keep the work focused on character movement smoothness.
+- Follow-up code inspection found a second possible source of position jitter: the hidden Phaser Arcade physics sprite remained enabled online, while render-frame local prediction also moved the same sprite and applied the shared manual arena collision resolver. That allowed Arcade integration/collision resolution to compete with predicted movement.
+- Commit `146185d74b3a381849259562126d164dae0a1d95`: when the connection becomes active, stop the Arcade body and disable its physics integration/collisions; restore the body when the connection drops and local mode resumes. Online position is then controlled only by local prediction/reconciliation and the shared arena resolver.
+- Local isolated verification on the updated source: `npm test` passed 80/80 and `npm run build` succeeded. Vite still emits the known non-fatal large-chunk warning. This local run used `npm install` because this repository has no tracked lockfile; no lockfile was committed.
+- Vercel Preview for the exact commit is building: deployment `dpl_4HMVc2nBj1xsd9j4XHC2LbbQ6RGE`, URL https://wlgame-test-734tgytye-callback5.vercel.app. Do not ask for testing until it is READY.
+- CI status for this exact commit has not yet been returned by the workflow-run lookup; verify the commit status checks.
+- Manual single-character movement QA is still required. Two-player testing remains explicitly deferred. PR #1 remains Draft and unmerged.
