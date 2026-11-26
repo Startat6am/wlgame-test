@@ -6,7 +6,8 @@ import {
   calculateLavaDamage,
   isCooldownReady,
   segmentIntersectsCircle,
-  resolveCircleCollision
+  resolveCircleCollision,
+  resolveCircleAgainstArena
 } from './combat-math.js';
 
 test('damage reduces health and accumulates damage points', () => {
@@ -91,4 +92,35 @@ test('circle collision resolves coincident centers deterministically', () => {
   assert.deepEqual(resolveCircleCollision(0, 0, 15, 0, 0, 20), {
     x: 35, y: 0, collided: true
   });
+});
+
+
+test('arena collision clamps a moving circle to every world boundary', () => {
+  assert.deepEqual(resolveCircleAgainstArena(-20, 2000, 15, { width: 100, height: 80 }, []), {
+    x: 15, y: 65, collided: true
+  });
+});
+
+test('arena collision allows tangential movement along an obstacle edge', () => {
+  const result = resolveCircleAgainstArena(15, 60, 15, { width: 200, height: 200 }, [
+    { x: 50, y: 50, radius: 20 }
+  ]);
+  assert.ok(Math.hypot(result.x - 50, result.y - 50) >= 35 - 1e-9);
+  assert.equal(result.x, 15);
+  assert.equal(result.y, 60, 'tangential movement should remain unobstructed');
+});
+
+test('arena collision resolves a corner formed by two overlapping obstacles', () => {
+  const obstacles = [
+    { x: 50, y: 50, radius: 20 },
+    { x: 95, y: 50, radius: 20 }
+  ];
+  const result = resolveCircleAgainstArena(72, 50, 15, { width: 200, height: 200 }, obstacles, 8);
+  for (const obstacle of obstacles) {
+    assert.ok(Math.hypot(result.x - obstacle.x, result.y - obstacle.y) >= 35 - 1e-8);
+  }
+});
+
+test('arena collision rejects a world smaller than the moving circle', () => {
+  assert.throws(() => resolveCircleAgainstArena(0, 0, 20, { width: 30, height: 30 }, []), RangeError);
 });
