@@ -68,10 +68,27 @@ export class GameSimulation {
       player.lastFireballAt = now;
       const directionX = Math.cos(message.angle);
       const directionY = Math.sin(message.angle);
+      // Use the client's render-frame-predicted position so casts originate at
+      // the visible hero, but cap the offset to keep the server authoritative.
+      let originX = player.x;
+      let originY = player.y;
+      if (Number.isFinite(message.originX) && Number.isFinite(message.originY)) {
+        const offsetX = message.originX - player.x;
+        const offsetY = message.originY - player.y;
+        const offsetLength = Math.hypot(offsetX, offsetY);
+        const scale = offsetLength > GAME_CONFIG.maxCastOriginOffset
+          ? GAME_CONFIG.maxCastOriginOffset / offsetLength
+          : 1;
+        originX += offsetX * scale;
+        originY += offsetY * scale;
+      }
+      const resolvedOrigin = resolveCircleAgainstArena(
+        originX, originY, GAME_CONFIG.playerRadius, GAME_CONFIG.world, OBSTACLES
+      );
       const projectileId = this.createId();
       this.projectiles.set(projectileId, {
         id: projectileId, ownerId: player.id,
-        x: player.x + directionX * 24, y: player.y + directionY * 24,
+        x: resolvedOrigin.x + directionX * 24, y: resolvedOrigin.y + directionY * 24,
         vx: directionX * GAME_CONFIG.fireball.speed,
         vy: directionY * GAME_CONFIG.fireball.speed,
         distance: 0, hitIds: new Set()
