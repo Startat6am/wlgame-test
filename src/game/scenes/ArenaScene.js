@@ -514,7 +514,7 @@ export class ArenaScene extends Phaser.Scene {
     const now = this.time.now;
     if (now - this.lastLocalCastAt < FIREBALL_CLIENT_COOLDOWN_MS) return;
     const angle = Phaser.Math.Angle.Between(this.hero.x, this.hero.y, worldX, worldY);
-    if (this.network.connected) this.network.castFireball(angle);
+    if (this.network.connected) this.network.castFireball(angle, this.hero.x, this.hero.y);
     else this.spawnLocalFireball(angle);
     this.lastLocalCastAt = now;
     this.selectedAbility = null;
