@@ -320,3 +320,10 @@ A phase is complete only when:
 - Interpolate server fireball positions using the existing 100 ms sample buffer instead of snapping at 20 Hz.
 - Add 180 ms client-side cooldown margin to avoid server cooldown rejection from network/tick timing.
 - Missing casts still require manual verification; server acknowledgement may be needed if reports persist. CI and Preview pending; single-player only.
+
+## Fireball spawn-origin correction — 2026-11-27
+
+- Client Fireball casts now include the locally predicted hero position at release, preventing the projectile from appearing at an outdated server-side position while the hero is moving.
+- Server validates finite coordinates, caps the client/server origin offset at 220 world units, and resolves the spawn point against arena bounds/obstacles before creating the projectile. The server still owns projectile movement, collisions, damage, and cooldown.
+- Added protocol and simulation regression tests for valid/invalid origins and offset capping.
+- Pending CI and a fresh Preview build; manual single-player verification required. No two-player testing and no Production deployment.
