@@ -34,7 +34,14 @@ export function parseClientMessage(raw, player, now) {
     if (!consumeRateLimit(player.castRate, now, 3, 1000)) return null;
     const angle = Number(message.angle);
     if (!Number.isFinite(angle)) return null;
-    return { type: 'cast', ability: 'fireball', angle };
+    const hasOriginX = message.originX !== undefined;
+    const hasOriginY = message.originY !== undefined;
+    if (hasOriginX !== hasOriginY) return null;
+    if (!hasOriginX) return { type: 'cast', ability: 'fireball', angle };
+    const originX = Number(message.originX);
+    const originY = Number(message.originY);
+    if (!Number.isFinite(originX) || !Number.isFinite(originY)) return null;
+    return { type: 'cast', ability: 'fireball', angle, originX, originY };
   }
 
   return null;
