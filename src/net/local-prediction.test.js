@@ -31,9 +31,9 @@ test('local prediction advances every render frame without waiting for snapshots
 test('server correction converges smoothly instead of snapping', () => {
   const state = createLocalPredictionState();
   state.initialized = true;
-  reconcileLocalPrediction(state, { x: 103.8, y: 100 }, { x: 100, y: 100 });
+  reconcileLocalPrediction(state, { x: 102.8, y: 100 }, { x: 100, y: 100 });
   const first = stepLocalPrediction(
-    state, { x: 103.8, y: 100 }, { x: 0, y: 0 }, 50,
+    state, { x: 102.8, y: 100 }, { x: 0, y: 0 }, 50,
     options, resolveCircleAgainstArena
   );
   const second = stepLocalPrediction(
@@ -68,4 +68,13 @@ test('delayed server corrections do not perturb movement while input is held', (
   assert.ok(Math.abs(result.x - 511.5) < 0.001);
   assert.equal(result.y, 500);
   assert.equal(state.correctionX, -18);
+});
+
+
+test('large stale server correction is discarded instead of pulling player back', () => {
+  const state = createLocalPredictionState();
+  state.initialized = true;
+  reconcileLocalPrediction(state, { x: 120, y: 100 }, { x: 100, y: 100 });
+  assert.equal(state.correctionX, 0);
+  assert.equal(state.correctionY, 0);
 });
