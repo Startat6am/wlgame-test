@@ -364,3 +364,10 @@ This section supersedes earlier notes above that said no Redis database was conf
 - Client fireball cooldown now includes a 180 ms safety margin beyond the server cooldown to reduce casts rejected due to network transit/tick timing.
 - User also reports occasional missing casts. This cooldown change mitigates one likely cause but does not yet prove cast delivery; verify with manual single-player testing and add server cast acknowledgement if misses persist.
 - CI/Preview pending. Do not claim QA. No two-player testing; PR #1 stays Draft.
+
+## Fireball spawn-origin correction — 2026-11-27
+
+- Client Fireball casts now include the locally predicted hero position at release, preventing the projectile from appearing at an outdated server-side position while the hero is moving.
+- Server validates finite coordinates, caps the client/server origin offset at 220 world units, and resolves the spawn point against arena bounds/obstacles before creating the projectile. The server still owns projectile movement, collisions, damage, and cooldown.
+- Added protocol and simulation regression tests for valid/invalid origins and offset capping.
+- Pending CI and a fresh Preview build; manual single-player verification required. No two-player testing and no Production deployment.
