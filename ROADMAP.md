@@ -313,3 +313,10 @@ A phase is complete only when:
 - Blend the latest pending server correction over 350 ms after input release.
 - Added regression coverage for active-input correction suppression.
 - Pending: CI, Preview deployment, and manual single-player validation. No two-player testing.
+
+
+### 2026-11-27 — projectile smoothing and release correction
+- Discard stale local-position corrections larger than 3 world units to prevent a visible backward pull after releasing movement.
+- Interpolate server fireball positions using the existing 100 ms sample buffer instead of snapping at 20 Hz.
+- Add 180 ms client-side cooldown margin to avoid server cooldown rejection from network/tick timing.
+- Missing casts still require manual verification; server acknowledgement may be needed if reports persist. CI and Preview pending; single-player only.
