@@ -28,6 +28,19 @@ test('rejects malformed, oversized, unknown, and non-finite messages', () => {
   assert.equal(parseClientMessage('{"type":"cast","ability":"fireball","angle":"Infinity"}', player, 100), null);
 });
 
+test('parses a finite predicted Fireball origin and rejects partial or invalid origins', () => {
+  const player = makePlayer();
+  assert.deepEqual(parseClientMessage(
+    '{"type":"cast","ability":"fireball","angle":1,"originX":123,"originY":456}', player, 100
+  ), { type: 'cast', ability: 'fireball', angle: 1, originX: 123, originY: 456 });
+  assert.equal(parseClientMessage(
+    '{"type":"cast","ability":"fireball","angle":1,"originX":123}', player, 200
+  ), null);
+  assert.equal(parseClientMessage(
+    '{"type":"cast","ability":"fireball","angle":1,"originX":"NaN","originY":456}', player, 300
+  ), null);
+});
+
 test('enforces per-player input and cast message limits', () => {
   const player = makePlayer();
   for (let i = 0; i < 30; i += 1) {
