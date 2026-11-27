@@ -356,3 +356,11 @@ This section supersedes earlier notes above that said no Redis database was conf
 - Добавлен тест, подтверждающий, что серверная коррекция не меняет движение при удерживаемом input.
 - Требуется CI и ручная проверка одного персонажа после публикации Preview. Не считать исправление подтверждённым до такой проверки.
 - Второго игрока не тестировать; PR #1 остаётся Draft и не сливать.
+
+
+## 2026-11-27 — movement release correction and network fireballs
+- User confirmed movement is smooth, but release caused the local hero to be pulled backward; server corrections larger than 3 world units are now discarded as stale instead of blended after release. Tiny drift corrections remain smooth.
+- Network fireball snapshots were rendered as direct 20 Hz position snaps; each projectile now uses the existing 100 ms interpolation buffer.
+- Client fireball cooldown now includes a 180 ms safety margin beyond the server cooldown to reduce casts rejected due to network transit/tick timing.
+- User also reports occasional missing casts. This cooldown change mitigates one likely cause but does not yet prove cast delivery; verify with manual single-player testing and add server cast acknowledgement if misses persist.
+- CI/Preview pending. Do not claim QA. No two-player testing; PR #1 stays Draft.
