@@ -105,8 +105,8 @@ export class NetworkClient {
     this.send({ type: 'input', x, y });
   }
 
-  castFireball(angle) {
-    this.send({ type: 'cast', ability: 'fireball', angle });
+  castFireball(angle, originX, originY) {
+    this.send({ type: 'cast', ability: 'fireball', angle, originX, originY });
   }
 
   send(message) {
