@@ -102,3 +102,6 @@ Use p95/p99 frame time in addition to average FPS. A high average FPS can hide p
 - Do not migrate engines or add ECS/WebGPU solely for fashion.
 - Every optimization must have a before/after measurement and a regression check.
 - Do not claim a performance gain until measured on the same device and scenario.
+
+### Frame-time diagnostics
+The scene keeps a fixed-size ring buffer of the latest 120 frame deltas (about two seconds at 60 FPS). The HUD refreshes twice per second and shows p95/p99 frame time alongside FPS. Percentiles are calculated only on HUD refresh, not every render frame. This is diagnostic telemetry, not a performance baseline: record same-device results under repeatable scenarios before claiming an optimization.

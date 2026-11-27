@@ -1,3 +1,6 @@
+import { resolveWebSocketUrl } from './websocket-url.js';
+import { getReconnectDelay } from './reconnect.js';
+
 export class NetworkClient {
   constructor(onState, onStatus, onWelcome, onCombat) {
     this.onState = onState;
@@ -7,18 +10,43 @@ export class NetworkClient {
     this.socket = null;
     this.connected = false;
     this.playerId = null;
+    this.reconnectAttempts = 0;
+    this.reconnectTimer = null;
+    this.intentionalClose = false;
   }
 
   connect() {
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const url = `${protocol}//${window.location.hostname}:2567`;
+    this.intentionalClose = false;
+    if (this.socket && (this.socket.readyState === WebSocket.OPEN ||
+        this.socket.readyState === WebSocket.CONNECTING)) return;
+    this.clearReconnectTimer();
+
+    const configuredUrl = import.meta.env.VITE_WS_SERVER_URL;
+    if (window.location.protocol === 'https:' && !configuredUrl?.trim()) {
+      this.onStatus('Локальная игра');
+      return;
+    }
+
+    let url;
     try {
-      this.socket = new WebSocket(url);
-      this.socket.addEventListener('open', () => {
+      url = resolveWebSocketUrl(window.location, configuredUrl);
+    } catch {
+      this.onStatus('Локальная игра');
+      return;
+    }
+
+    this.onStatus(this.reconnectAttempts > 0 ? 'Переподключение…' : 'Подключение…');
+    try {
+      const socket = new WebSocket(url);
+      this.socket = socket;
+      socket.addEventListener('open', () => {
+        if (this.socket !== socket) return;
         this.connected = true;
+        this.reconnectAttempts = 0;
         this.onStatus('Сервер подключён');
       });
-      this.socket.addEventListener('message', (event) => {
+      socket.addEventListener('message', (event) => {
+        if (this.socket !== socket) return;
         try {
           const message = JSON.parse(event.data);
           if (message.type === 'welcome' && typeof message.id === 'string') {
@@ -31,17 +59,45 @@ export class NetworkClient {
           // Ignore malformed packets; server remains authoritative.
         }
       });
-      this.socket.addEventListener('close', () => {
+      socket.addEventListener('close', () => {
+        if (this.socket !== socket) return;
+        this.socket = null;
         this.connected = false;
         this.playerId = null;
-        this.onStatus('Локальная игра');
+        if (this.intentionalClose) {
+          this.onStatus('Локальная игра');
+          return;
+        }
+        this.scheduleReconnect();
       });
-      this.socket.addEventListener('error', () => {
+      socket.addEventListener('error', () => {
+        if (this.socket !== socket) return;
         this.connected = false;
-        this.onStatus('Локальная игра');
+        this.onStatus('Связь потеряна');
+        // The close event schedules the retry for both network and duration-limit disconnects.
       });
     } catch {
-      this.onStatus('Локальная игра');
+      this.socket = null;
+      this.connected = false;
+      this.scheduleReconnect();
+    }
+  }
+
+  scheduleReconnect() {
+    if (this.intentionalClose || this.reconnectTimer !== null) return;
+    const delay = getReconnectDelay(this.reconnectAttempts);
+    this.reconnectAttempts += 1;
+    this.onStatus('Переподключение…');
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null;
+      this.connect();
+    }, delay);
+  }
+
+  clearReconnectTimer() {
+    if (this.reconnectTimer !== null) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
     }
   }
 
@@ -49,8 +105,8 @@ export class NetworkClient {
     this.send({ type: 'input', x, y });
   }
 
-  castFireball(angle) {
-    this.send({ type: 'cast', ability: 'fireball', angle });
+  castFireball(angle, originX, originY) {
+    this.send({ type: 'cast', ability: 'fireball', angle, originX, originY });
   }
 
   send(message) {
@@ -59,6 +115,13 @@ export class NetworkClient {
   }
 
   disconnect() {
-    this.socket?.close();
+    this.intentionalClose = true;
+    this.clearReconnectTimer();
+    const socket = this.socket;
+    this.socket = null;
+    this.connected = false;
+    this.playerId = null;
+    this.onStatus('Локальная игра');
+    socket?.close();
   }
 }
