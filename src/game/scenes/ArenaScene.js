@@ -12,6 +12,7 @@ import { createLocalPredictionState, reconcileLocalPrediction, stepLocalPredicti
 
 const SPEED = balance.baseline.movementSpeed.value;
 const FIREBALL = balance.abilities.find((ability) => ability.id === 'fireball');
+const FIREBALL_CLIENT_COOLDOWN_MS = FIREBALL.cooldown.value * 1000 + 180;
 
 export class ArenaScene extends Phaser.Scene {
   constructor() {
@@ -406,16 +407,16 @@ export class ArenaScene extends Phaser.Scene {
       let view = this.projectileViews.get(projectile.id);
       if (!view) {
         const p = worldToScreen(projectile.x, projectile.y);
-        view = this.add.circle(p.x, p.y, 8, 0xffa33a, 1)
+        const sprite = this.add.circle(p.x, p.y, 8, 0xffa33a, 1)
           .setStrokeStyle(2, 0xffe5a0, 0.9).setDepth(p.y + 20);
+        view = { sprite, interpolation: createRemoteInterpolationBuffer() };
         this.projectileViews.set(projectile.id, view);
       }
-      const p = worldToScreen(projectile.x, projectile.y);
-      view.setPosition(p.x, p.y).setDepth(p.y + 20);
+      pushRemotePlayerSample(view.interpolation, { id: projectile.id, x: projectile.x, y: projectile.y }, this.time.now);
     }
     for (const [id, view] of this.projectileViews) {
       if (!seenProjectiles.has(id)) {
-        view.destroy();
+        view.sprite.destroy();
         this.projectileViews.delete(id);
       }
     }
@@ -432,6 +433,16 @@ export class ArenaScene extends Phaser.Scene {
         view.sprite.rotation = projectedAngle(sample.facingX, sample.facingY) + Math.PI / 2;
       }
       view.label.setPosition(p.x, p.y - 42).setDepth(p.y + 2);
+    }
+  }
+
+  updateProjectileViews() {
+    const renderAt = this.time.now - REMOTE_INTERPOLATION_DELAY_MS;
+    for (const view of this.projectileViews.values()) {
+      const sample = sampleRemotePlayer(view.interpolation, renderAt);
+      if (!sample) continue;
+      const p = worldToScreen(sample.x, sample.y);
+      view.sprite.setPosition(p.x, p.y).setDepth(p.y + 20);
     }
   }
 
@@ -501,7 +512,7 @@ export class ArenaScene extends Phaser.Scene {
 
   castFireball(worldX, worldY) {
     const now = this.time.now;
-    if (now - this.lastLocalCastAt < FIREBALL.cooldown.value * 1000) return;
+    if (now - this.lastLocalCastAt < FIREBALL_CLIENT_COOLDOWN_MS) return;
     const angle = Phaser.Math.Angle.Between(this.hero.x, this.hero.y, worldX, worldY);
     if (this.network.connected) this.network.castFireball(angle);
     else this.spawnLocalFireball(angle);
@@ -548,6 +559,7 @@ export class ArenaScene extends Phaser.Scene {
       this.updateTrainingTargetView();
     }
     this.updateRemotePlayers();
+    this.updateProjectileViews();
     this.updateLocalProjectiles(delta);
     if (this.time.now >= this.nextFpsUpdate) {
       const actualFps = this.game.loop.actualFps;
