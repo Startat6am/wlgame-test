@@ -1,5 +1,6 @@
 const MAX_PREDICTION_DELTA_MS = 50;
 const DEFAULT_CORRECTION_TIME_MS = 350;
+const MAX_IDLE_CORRECTION_DISTANCE = 3;
 
 export function createLocalPredictionState() {
   return {
@@ -27,8 +28,17 @@ export function reconcileLocalPrediction(state, predicted, authoritative) {
   // Keep the newest server error as a pending correction. Applying it while
   // the player is actively moving makes 20 Hz snapshots fight render-frame
   // prediction and produces visible micro-teleports.
-  state.correctionX = authoritative.x - predicted.x;
-  state.correctionY = authoritative.y - predicted.y;
+  const correctionX = authoritative.x - predicted.x;
+  const correctionY = authoritative.y - predicted.y;
+  // Large differences are stale movement snapshots, not harmless drift.
+  // Applying them after release visibly pulls the hero back to an old position.
+  if (Math.hypot(correctionX, correctionY) <= MAX_IDLE_CORRECTION_DISTANCE) {
+    state.correctionX = correctionX;
+    state.correctionY = correctionY;
+  } else {
+    state.correctionX = 0;
+    state.correctionY = 0;
+  }
   return null;
 }
 
