@@ -11,7 +11,8 @@ export const GAME_CONFIG = Object.freeze({
     damage: 8, cooldownMs: 1400, speed: 520, radius: 9,
     maxDistance: 520, baseKnockback: 130
   }),
-  playerRadius: 15
+  playerRadius: 15,
+  maxCastOriginOffset: 220
 });
 
 const OBSTACLES = ARENA_OBSTACLES;
